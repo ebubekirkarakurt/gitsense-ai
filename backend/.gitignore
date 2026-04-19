@@ -1,0 +1,34 @@
+# Dependency directories
+node_modules/
+jspm_packages/
+
+# Debug logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+logs
+*.log
+
+# Environment variables (Hassas Bilgiler!)
+.env
+.env.test
+.env.production
+
+# TypeScript specific
+dist/
+build/
+*.tsbuildinfo
+
+# OS Metadata
+.DS_Store
+Thumbs.db
+
+# IDE/Editor folders
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Coverage folders (Test kullanıyorsanız)
+coverage/
+.nyc_output/
