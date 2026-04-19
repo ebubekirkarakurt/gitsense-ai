@@ -1,0 +1,11 @@
+{
+  "name": "commitsense",
+  "version": "1.0.0",
+  "description": "commit sense ai commit message assistant",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "ebubekir karakurt",
+  "license": "ISC"
+}
