@@ -21,6 +21,18 @@ router.post("/", async (req, res) => {
 
     return res.json({
       suggestions: aiResult.suggestions,
+      stats: {
+        files: reduced.files.length,
+        additions: reduced.files.reduce(
+          (sum: number, f: any) => sum + f.added,
+          0,
+        ),
+        deletions: reduced.files.reduce(
+          (sum: number, f: any) => sum + f.removed,
+          0,
+        ),
+        fileNames: reduced.files.map((f: any) => f.path),
+      },
     });
   } catch (err) {
     console.error(err);
