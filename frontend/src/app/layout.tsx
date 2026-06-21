@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
-import { Sidebar } from "@/components/sidebar/Sidebar";
 import "./globals.css";
 import { ThemeToggle } from "@/components/ThemeToggle";
 
@@ -19,12 +18,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={inter.className}>
-        <div style={{ display: "flex", minHeight: "100vh" }}>
-          <Sidebar />
-          <div style={{ flex: 1, minWidth: 0 }}>
-            {children}
-          </div>
-        </div>
+        {children}
         <ThemeToggle />
       </body>
     </html>
