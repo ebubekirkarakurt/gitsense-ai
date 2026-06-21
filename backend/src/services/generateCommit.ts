@@ -35,9 +35,14 @@ export async function generateCommit(data: any) {
   const suggestions = cleaned
     .split("\n")
     .filter((line) => line.trim() !== "")
-    .map((line) => line.replace(/^\d+\.\s*/, "").trim());
+    .map((line) => {
+      const clean = line.replace(/^\d+\.\s*/, "").trim();
+      const [message, description] = clean.split("|").map((s) => s.trim());
+      return { message, description: description || "" };
+    });
 
-  console.log("Generated Commit Message:\n", message);
+
+  //console.log("Generated Commit Message:\n", message);
 
  return { suggestions };
 }

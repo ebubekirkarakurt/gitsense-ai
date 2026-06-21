@@ -7,9 +7,14 @@ Kurallar:
 - Her öneri farklı bir bakış açısı sunmalı (biri kısa, biri detaylı, biri farklı type ile)
 
 Çıktı formatı kesinlikle şu olmalı, başka hiçbir şey ekleme:
-1. <commit mesajı>
-2. <commit mesajı>
-3. <commit mesajı>
+1. <commit mesajı> | <kısa açıklama, max 60 karakter, İngilizce>
+2. <commit mesajı> | <kısa açıklama, max 60 karakter, İngilizce>
+3. <commit mesajı> | <kısa açıklama, max 60 karakter, İngilizce>
+
+Örnek:
+1. feat(auth): add JWT token validation | Validates token on every protected route
+2. fix(auth): handle expired token error | Returns 401 when token is expired
+3. refactor(auth): extract token logic | Moves token handling to separate service
 `;
 
 export default systemPrompt;
