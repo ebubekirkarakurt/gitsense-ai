@@ -7,6 +7,7 @@ export default function Home() {
   const [diff, setDiff] = useState("");
   const [suggestions, setSuggestions] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const [stats, setStats] = useState<{
     files: number;
@@ -20,23 +21,32 @@ export default function Home() {
   const handleSubmit = async () => {
     if (!diff) return;
     setLoading(true);
+    setError(null);
 
-    const response = await fetch(
-      `${process.env.NEXT_PUBLIC_API_URL}/api/commit`,
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
+    try {
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL}/api/commit`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ diff }),
         },
-        body: JSON.stringify({ diff }),
-      },
-    );
+      );
 
-    const data = await response.json();
-    setSuggestions(data.suggestions || []);
-    setStats(data.stats || null);
+      if (!response.ok) {
+        throw new Error("Sunucu hatası. Lütfen tekrar deneyin.");
+      }
 
-    setLoading(false);
+      const data = await response.json();
+      setSuggestions(data.suggestions || []);
+      setStats(data.stats || null);
+    } catch (err) {
+      setError(
+        "Bir hata oluştu. Backend uyuyor olabilir, 30 saniye sonra tekrar dene.",
+      );
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleCopy = (text: string, index: number) => {
@@ -385,6 +395,21 @@ export default function Home() {
             in your terminal, then upload or paste the output.
           </p>
         </div>
+        {error && (
+          <div
+            style={{
+              background: "var(--color-del-bg)",
+              border: "1px solid var(--color-del)",
+              borderRadius: 10,
+              padding: "12px 16px",
+              marginBottom: 16,
+              fontSize: 13,
+              color: "var(--color-del)",
+            }}
+          >
+            ⚠️ {error}
+          </div>
+        )}
       </div>
     </main>
   );
