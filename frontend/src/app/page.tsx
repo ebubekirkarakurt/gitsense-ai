@@ -11,13 +11,16 @@ export default function Home() {
     if (!diff) return;
     setLoading(true);
 
-    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/commit`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
+    const response = await fetch(
+      `${process.env.NEXT_PUBLIC_API_URL}/api/commit`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ diff }),
       },
-      body: JSON.stringify({ diff }),
-    });
+    );
 
     const data = await response.json();
     setSuggestions(data.suggestions || []);
@@ -26,17 +29,44 @@ export default function Home() {
   };
 
   return (
-    <main className="flex-1 p-8 max-w-3xl">
-      <h1 className="text-3xl font-bold mb-2">GitSense</h1>
-      <p className="text-gray-500 mb-6">
-        Git diff'ini yapıştır, AI commit mesajı üretsin.
-      </p>
+    <main className="flex-1 p-10 max-w-3xl mx-auto">
+      {/* Başlık */}
+      <div className="mb-8">
+        <h1
+          className="text-3xl font-bold mb-1"
+          style={{ color: "var(--color-text)" }}
+        >
+          Analyze Changes
+        </h1>
+        <p style={{ color: "var(--color-muted)", fontSize: 14 }}>
+          Paste your git diff or upload a file to generate commit messages.
+        </p>
+      </div>
 
-      <div className="mb-4">
-        <label className="block text-sm text-gray-500 mb-2">Dosya yükle</label>
+      {/* Dosya yükleme — gizli input, özel buton */}
+      <div className="mb-3 flex items-center gap-3">
+        <label
+          htmlFor="file-upload"
+          style={{
+            display: "inline-flex",
+            alignItems: "center",
+            gap: 6,
+            padding: "6px 14px",
+            borderRadius: 8,
+            border: "1px solid var(--color-border)",
+            background: "var(--color-surface)",
+            color: "var(--color-muted)",
+            fontSize: 13,
+            cursor: "pointer",
+          }}
+        >
+          📎 Upload .txt file
+        </label>
         <input
+          id="file-upload"
           type="file"
           accept=".txt"
+          style={{ display: "none" }}
           onChange={(e) => {
             const file = e.target.files?.[0];
             if (!file) return;
@@ -44,41 +74,135 @@ export default function Home() {
             reader.onload = (event) => setDiff(event.target?.result as string);
             reader.readAsText(file);
           }}
-          className="text-sm"
         />
+        <span style={{ fontSize: 12, color: "var(--color-muted)" }}>
+          or paste below
+        </span>
       </div>
 
+      {/* Textarea */}
       <textarea
         value={diff}
         onChange={(e) => setDiff(e.target.value)}
         placeholder="git diff çıktısını buraya yapıştır..."
-        className="w-full h-48 border rounded-lg p-4 text-sm font-mono placeholder-gray-400 focus:outline-none focus:border-blue-500 mb-4 resize-none"
+        style={{
+          width: "100%",
+          height: 220,
+          background: "var(--color-surface)",
+          border: "1px solid var(--color-border)",
+          borderRadius: 10,
+          padding: 16,
+          fontSize: 13,
+          fontFamily: "monospace",
+          color: "var(--color-text)",
+          resize: "none",
+          outline: "none",
+          marginBottom: 12,
+        }}
       />
 
+      {/* Analiz Et butonu */}
       <button
         onClick={handleSubmit}
         disabled={loading || !diff}
-        className="w-full bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white font-semibold py-3 rounded-lg transition mb-8"
+        style={{
+          width: "100%",
+          background:
+            loading || !diff ? "var(--color-muted)" : "var(--color-accent)",
+          color: "#fff",
+          border: "none",
+          borderRadius: 10,
+          padding: "12px 0",
+          fontSize: 15,
+          fontWeight: 600,
+          cursor: loading || !diff ? "not-allowed" : "pointer",
+          marginBottom: 32,
+          transition: "opacity 0.15s",
+        }}
       >
-        {loading ? "Analiz ediliyor..." : "Analiz Et"}
+        {loading ? "Analiz ediliyor..." : "Analyze"}
       </button>
 
-      <div className="space-y-4">
-        {suggestions.map((suggestion, index) => (
-          <div
-            key={index}
-            className="border rounded-lg p-4 flex justify-between items-center"
+      {/* Commit önerileri */}
+      {suggestions.length > 0 && (
+        <div>
+          <p
+            style={{
+              fontSize: 13,
+              fontWeight: 600,
+              color: "var(--color-muted)",
+              marginBottom: 12,
+              textTransform: "uppercase",
+              letterSpacing: "0.06em",
+            }}
           >
-            <code className="text-sm text-green-600">{suggestion}</code>
-            <button
-              onClick={() => navigator.clipboard.writeText(suggestion)}
-              className="ml-4 text-xs bg-gray-100 hover:bg-gray-200 px-3 py-1 rounded transition"
-            >
-              Kopyala
-            </button>
+            AI Commit Suggestions
+          </p>
+          <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+            {suggestions.map((suggestion, index) => (
+              <div
+                key={index}
+                style={{
+                  background: "var(--color-surface)",
+                  border: "1px solid var(--color-border)",
+                  borderRadius: 10,
+                  padding: "14px 16px",
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                }}
+              >
+                <div>
+                  {index === 0 && (
+                    <span
+                      style={{
+                        fontSize: 10,
+                        fontWeight: 700,
+                        background: "var(--color-accent-bg)",
+                        color: "var(--color-accent)",
+                        padding: "2px 8px",
+                        borderRadius: 4,
+                        marginBottom: 6,
+                        display: "inline-block",
+                        textTransform: "uppercase",
+                        letterSpacing: "0.06em",
+                      }}
+                    >
+                      Recommended
+                    </span>
+                  )}
+                  <code
+                    style={{
+                      display: "block",
+                      fontSize: 13,
+                      color: "var(--color-add)",
+                      fontFamily: "monospace",
+                    }}
+                  >
+                    {suggestion}
+                  </code>
+                </div>
+                <button
+                  onClick={() => navigator.clipboard.writeText(suggestion)}
+                  style={{
+                    marginLeft: 16,
+                    background: "none",
+                    border: "1px solid var(--color-border)",
+                    borderRadius: 6,
+                    padding: "5px 12px",
+                    fontSize: 12,
+                    color: "var(--color-muted)",
+                    cursor: "pointer",
+                    flexShrink: 0,
+                  }}
+                >
+                  Copy
+                </button>
+              </div>
+            ))}
           </div>
-        ))}
-      </div>
+        </div>
+      )}
     </main>
   );
 }
