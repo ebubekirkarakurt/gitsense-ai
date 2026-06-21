@@ -15,6 +15,8 @@ export default function Home() {
     fileNames: string[];
   } | null>(null);
 
+  const [copiedIndex, setCopiedIndex] = useState<number | null>(null);
+
   const handleSubmit = async () => {
     if (!diff) return;
     setLoading(true);
@@ -35,6 +37,12 @@ export default function Home() {
     setStats(data.stats || null);
 
     setLoading(false);
+  };
+
+  const handleCopy = (text: string, index: number) => {
+    navigator.clipboard.writeText(text);
+    setCopiedIndex(index);
+    setTimeout(() => setCopiedIndex(null), 2000);
   };
 
   return (
@@ -144,9 +152,26 @@ export default function Home() {
             cursor: loading || !diff ? "not-allowed" : "pointer",
             marginBottom: 32,
             transition: "opacity 0.15s",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            gap: 8,
           }}
         >
-          {loading ? "Analiz ediliyor..." : "Analyze"}
+          {loading && (
+            <span
+              style={{
+                width: 16,
+                height: 16,
+                border: "2px solid rgba(255,255,255,0.3)",
+                borderTop: "2px solid #fff",
+                borderRadius: "50%",
+                display: "inline-block",
+                animation: "spin 0.8s linear infinite",
+              }}
+            />
+          )}
+          {loading ? "Analyzing..." : "Analyze"}
         </button>
 
         {/* Commit önerileri */}
@@ -209,20 +234,23 @@ export default function Home() {
                     </code>
                   </div>
                   <button
-                    onClick={() => navigator.clipboard.writeText(suggestion)}
+                    onClick={() => handleCopy(suggestion, index)}
                     style={{
                       marginLeft: 16,
-                      background: "none",
+                      background:
+                        copiedIndex === index ? "var(--color-accent)" : "none",
                       border: "1px solid var(--color-border)",
                       borderRadius: 6,
                       padding: "5px 12px",
                       fontSize: 12,
-                      color: "var(--color-muted)",
+                      color:
+                        copiedIndex === index ? "#fff" : "var(--color-muted)",
                       cursor: "pointer",
                       flexShrink: 0,
+                      transition: "all 0.2s",
                     }}
                   >
-                    Copy
+                    {copiedIndex === index ? "✓ Copied!" : "Copy"}
                   </button>
                 </div>
               ))}
