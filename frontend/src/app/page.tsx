@@ -11,7 +11,7 @@ export default function Home() {
     if (!diff) return;
     setLoading(true);
 
-    const response = await fetch("http://localhost:3001/api/commit", {
+    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/commit`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
