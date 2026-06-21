@@ -1,9 +1,13 @@
 import type { Metadata } from "next";
+import { Inter } from "next/font/google";
+import { Sidebar } from "@/components/sidebar/Sidebar";
 import "./globals.css";
+
+const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
   title: "GitSense",
-  description: "AI powered commit message generator",
+  description: "AI-powered git commit analyzer",
 };
 
 export default function RootLayout({
@@ -13,7 +17,14 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body>{children}</body>
+      <body className={inter.className}>
+        <div style={{ display: "flex", minHeight: "100vh" }}>
+          <Sidebar />
+          <div style={{ flex: 1, minWidth: 0 }}>
+            {children}
+          </div>
+        </div>
+      </body>
     </html>
   );
 }
