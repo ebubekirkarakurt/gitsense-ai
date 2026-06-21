@@ -1,3 +1,5 @@
+@import "tailwindcss";
+
 *, *::before, *::after {
   box-sizing: border-box;
   margin: 0;
@@ -35,6 +37,20 @@
   /* misc */
   --radius:  10px;
   --shadow:  0 1px 3px rgba(0,0,0,.06);
+}
+
+[data-theme="dark"] {
+  --color-bg:      #0a0a0f;
+  --color-surface: #0d1117;
+  --color-border:  rgba(255,255,255,0.08);
+  --color-text:    #e6edf3;
+  --color-muted:   #7d8590;
+  --color-accent:    #7c3aed;
+  --color-accent-bg: #1e1b4b;
+  --color-add:    #4ade80;
+  --color-add-bg: #0d2818;
+  --color-del:    #f87171;
+  --color-del-bg: #2d1010;
 }
 
 body {

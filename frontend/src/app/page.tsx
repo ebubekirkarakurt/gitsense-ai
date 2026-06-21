@@ -26,30 +26,33 @@ export default function Home() {
   };
 
   return (
-    <main className="min-h-screen bg-gray-950 text-white p-8 max-w-3xl mx-auto">
+    <main className="flex-1 p-8 max-w-3xl">
       <h1 className="text-3xl font-bold mb-2">GitSense</h1>
-      <p className="text-gray-400 mb-6">
+      <p className="text-gray-500 mb-6">
         Git diff'ini yapıştır, AI commit mesajı üretsin.
       </p>
 
-      <input
-        type="file"
-        accept=".txt"
-        onChange={(e) => {
-          const file = e.target.files?.[0];
-          if (!file) return;
-          const reader = new FileReader();
-          reader.onload = (event) => setDiff(event.target?.result as string);
-          reader.readAsText(file);
-        }}
-        className="mb-4 text-sm text-gray-400"
-      />
+      <div className="mb-4">
+        <label className="block text-sm text-gray-500 mb-2">Dosya yükle</label>
+        <input
+          type="file"
+          accept=".txt"
+          onChange={(e) => {
+            const file = e.target.files?.[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = (event) => setDiff(event.target?.result as string);
+            reader.readAsText(file);
+          }}
+          className="text-sm"
+        />
+      </div>
 
       <textarea
         value={diff}
         onChange={(e) => setDiff(e.target.value)}
         placeholder="git diff çıktısını buraya yapıştır..."
-        className="w-full h-48 bg-gray-900 border border-gray-700 rounded-lg p-4 text-sm font-mono text-gray-200 placeholder-gray-600 focus:outline-none focus:border-blue-500 mb-4"
+        className="w-full h-48 border rounded-lg p-4 text-sm font-mono placeholder-gray-400 focus:outline-none focus:border-blue-500 mb-4 resize-none"
       />
 
       <button
@@ -64,12 +67,12 @@ export default function Home() {
         {suggestions.map((suggestion, index) => (
           <div
             key={index}
-            className="bg-gray-900 border border-gray-700 rounded-lg p-4 flex justify-between items-center"
+            className="border rounded-lg p-4 flex justify-between items-center"
           >
-            <code className="text-green-400 text-sm">{suggestion}</code>
+            <code className="text-sm text-green-600">{suggestion}</code>
             <button
               onClick={() => navigator.clipboard.writeText(suggestion)}
-              className="ml-4 text-xs bg-gray-700 hover:bg-gray-600 px-3 py-1 rounded transition"
+              className="ml-4 text-xs bg-gray-100 hover:bg-gray-200 px-3 py-1 rounded transition"
             >
               Kopyala
             </button>

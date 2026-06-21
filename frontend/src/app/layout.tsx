@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import { Sidebar } from "@/components/sidebar/Sidebar";
 import "./globals.css";
+import { ThemeToggle } from "@/components/ThemeToggle";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -24,6 +25,7 @@ export default function RootLayout({
             {children}
           </div>
         </div>
+        <ThemeToggle />
       </body>
     </html>
   );
