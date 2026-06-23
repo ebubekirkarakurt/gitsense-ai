@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { DiffViewer } from "@/components/DiffViewer";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/lib/supabase";
@@ -22,6 +22,24 @@ export default function Home() {
   } | null>(null);
 
   const { user, loading: authLoading } = useAuth();
+  const [projects, setProjects] = useState<any[]>([]);
+  const [selectedProjectId, setSelectedProjectId] = useState<string | null>(
+    () => {
+      if (typeof window !== "undefined") {
+        return localStorage.getItem("selectedProjectId");
+      }
+      return null;
+    },
+  );
+
+  useEffect(() => {
+    if (!user) return;
+    supabase
+      .from("projects")
+      .select("*")
+      .eq("user_id", user.id)
+      .then(({ data }) => setProjects(data || []));
+  }, [user]);
 
   if (authLoading)
     return (
@@ -68,15 +86,14 @@ export default function Home() {
         data: { user },
       } = await supabase.auth.getUser();
 
-      if (user) {
-        await supabase.from("analyses").insert({
-          user_id: user.id,
-          title: data.title || `Analysis ${new Date().toLocaleDateString()}`,
-          diff_text: diff,
-          suggestions: data.suggestions,
-          stats: data.stats,
-        });
-      }
+      await supabase.from("analyses").insert({
+        user_id: user.id,
+        title: data.title || `Analysis ${new Date().toLocaleDateString()}`,
+        diff_text: diff,
+        suggestions: data.suggestions,
+        stats: data.stats,
+        project_id: selectedProjectId,
+      });
     } catch {
       setError(
         "Bir hata oluştu. Backend uyuyor olabilir, 30 saniye sonra tekrar dene.",
@@ -538,157 +555,270 @@ export default function Home() {
           zIndex: 10,
         }}
       >
-        <div style={{ width: "100%", maxWidth: 640, position: "relative" }}>
-          <div
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: 10,
-              background: "var(--color-bg)",
-              border: "1px solid var(--color-border)",
-              borderRadius: 14,
-              padding: "10px 14px",
-            }}
-          >
-            {/* + butonu — dropdown */}
-            <div style={{ position: "relative" }}>
-              <button
-                onClick={() => setShowMenu(!showMenu)}
+        <div style={{ width: "100%", maxWidth: 640 }}>
+          {/* Proje dropdown */}
+          {showMenu && (
+            <div
+              style={{
+                background: "var(--color-surface)",
+                border: "1px solid var(--color-border)",
+                borderRadius: 12,
+                padding: 6,
+                marginBottom: 8,
+                boxShadow: "0 -4px 16px rgba(0,0,0,0.1)",
+              }}
+            >
+              <p
                 style={{
-                  width: 30,
-                  height: 30,
-                  borderRadius: 8,
-                  border: "1px solid var(--color-border)",
-                  background: "var(--color-bg)",
-                  color: "var(--color-text)",
-                  cursor: "pointer",
-                  fontSize: 18,
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  flexShrink: 0,
+                  fontSize: 11,
+                  color: "var(--color-muted)",
+                  padding: "4px 10px",
+                  textTransform: "uppercase",
+                  letterSpacing: "0.06em",
                 }}
               >
-                +
+                Project
+              </p>
+              <button
+                onClick={() => {
+                  setSelectedProjectId(null);
+                  localStorage.removeItem("selectedProjectId");
+                  setShowMenu(false);
+                }}
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 8,
+                  width: "100%",
+                  padding: "7px 10px",
+                  borderRadius: 6,
+                  background:
+                    selectedProjectId === null
+                      ? "var(--color-accent-bg)"
+                      : "none",
+                  border: "none",
+                  cursor: "pointer",
+                  fontSize: 13,
+                  color:
+                    selectedProjectId === null
+                      ? "var(--color-accent)"
+                      : "var(--color-text)",
+                  fontFamily: "inherit",
+                }}
+              >
+                No project
               </button>
-
-              {showMenu && (
-                <div
+              {projects.map((p) => (
+                <button
+                  key={p.id}
+                  onClick={() => {
+                    setSelectedProjectId(p.id);
+                    localStorage.setItem("selectedProjectId", p.id);
+                    setShowMenu(false);
+                  }}
                   style={{
-                    position: "absolute",
-                    bottom: "calc(100% + 8px)",
-                    left: 0,
-                    background: "var(--color-surface)",
-                    border: "1px solid var(--color-border)",
-                    borderRadius: 10,
-                    padding: 6,
-                    minWidth: 160,
-                    boxShadow: "0 4px 16px rgba(0,0,0,0.1)",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 8,
+                    width: "100%",
+                    padding: "7px 10px",
+                    borderRadius: 6,
+                    background:
+                      selectedProjectId === p.id
+                        ? "var(--color-accent-bg)"
+                        : "none",
+                    border: "none",
+                    cursor: "pointer",
+                    fontSize: 13,
+                    color:
+                      selectedProjectId === p.id
+                        ? "var(--color-accent)"
+                        : "var(--color-text)",
+                    fontFamily: "inherit",
                   }}
                 >
-                  <label
-                    htmlFor="file-upload"
+                  <span
                     style={{
-                      display: "flex",
-                      alignItems: "center",
-                      gap: 8,
-                      padding: "8px 10px",
-                      borderRadius: 6,
-                      fontSize: 13,
-                      color: "var(--color-text)",
-                      cursor: "pointer",
+                      width: 8,
+                      height: 8,
+                      borderRadius: "50%",
+                      background: p.color,
+                      flexShrink: 0,
                     }}
-                  >
-                    📎 Add .txt file
-                  </label>
-                </div>
-              )}
+                  />
+                  {p.name}
+                </button>
+              ))}
 
-              <input
-                id="file-upload"
-                type="file"
-                accept=".txt"
-                style={{ display: "none" }}
-                onChange={(e) => {
-                  const file = e.target.files?.[0];
-                  if (!file) return;
-                  const reader = new FileReader();
-                  reader.onload = (event) =>
-                    setDiff(event.target?.result as string);
-                  reader.readAsText(file);
-                  setShowMenu(false);
+              <div
+                style={{
+                  borderTop: "1px solid var(--color-border)",
+                  marginTop: 4,
+                  paddingTop: 4,
+                }}
+              >
+                <label
+                  htmlFor="file-upload"
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 8,
+                    padding: "7px 10px",
+                    borderRadius: 6,
+                    fontSize: 13,
+                    color: "var(--color-text)",
+                    cursor: "pointer",
+                  }}
+                >
+                  📎 Add .txt file
+                </label>
+                <input
+                  id="file-upload"
+                  type="file"
+                  accept=".txt"
+                  style={{ display: "none" }}
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (!file) return;
+                    const reader = new FileReader();
+                    reader.onload = (event) =>
+                      setDiff(event.target?.result as string);
+                    reader.readAsText(file);
+                    setShowMenu(false);
+                  }}
+                />
+              </div>
+            </div>
+          )}
+
+          {/* Input bar */}
+          <div
+            style={{
+              background: "var(--color-surface)",
+              border: "1px solid var(--color-border)",
+              borderRadius: 16,
+              overflow: "hidden",
+            }}
+          >
+            {/* Textarea */}
+            <div style={{ padding: "12px 16px" }}>
+              <textarea
+                value={diff}
+                onChange={(e) => setDiff(e.target.value)}
+                placeholder="Write a message..."
+                rows={1}
+                style={{
+                  width: "100%",
+                  background: "none",
+                  border: "none",
+                  outline: "none",
+                  fontSize: 14,
+                  fontFamily: "inherit",
+                  color: "var(--color-text)",
+                  resize: "none",
+                  lineHeight: 1.5,
+                  maxHeight: 120,
+                  overflow: "auto",
                 }}
               />
             </div>
 
-            <textarea
-              value={diff}
-              onChange={(e) => setDiff(e.target.value)}
-              placeholder="Paste your git diff here..."
-              rows={1}
+            {/* Alt bar — butonlar */}
+            <div
               style={{
-                flex: 1,
-                background: "none",
-                border: "none",
-                outline: "none",
-                fontSize: 13,
-                fontFamily: "monospace",
-                color: "var(--color-text)",
-                resize: "none",
-                lineHeight: 1.5,
-                maxHeight: 24,
-                overflow: "hidden",
-              }}
-            />
-
-            <button
-              onClick={handleSubmit}
-              disabled={loading || !diff}
-              style={{
-                width: 32,
-                height: 32,
-                borderRadius: 8,
-                background:
-                  loading || !diff
-                    ? "var(--color-muted)"
-                    : "var(--color-accent)",
-                border: "none",
-                cursor: loading || !diff ? "not-allowed" : "pointer",
                 display: "flex",
                 alignItems: "center",
-                justifyContent: "center",
-                flexShrink: 0,
-                transition: "background 0.15s",
+                justifyContent: "space-between",
+                padding: "8px 12px",
+                borderTop: "1px solid var(--color-border)",
               }}
             >
-              {loading ? (
-                <span
+              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                {/* + butonu */}
+                <button
+                  onClick={() => setShowMenu(!showMenu)}
                   style={{
-                    width: 12,
-                    height: 12,
-                    border: "2px solid rgba(255,255,255,0.3)",
-                    borderTop: "2px solid #fff",
-                    borderRadius: "50%",
-                    display: "inline-block",
-                    animation: "spin 0.8s linear infinite",
+                    width: 28,
+                    height: 28,
+                    borderRadius: 8,
+                    border: "1px solid var(--color-border)",
+                    background: "var(--color-bg)",
+                    color: "var(--color-text)",
+                    cursor: "pointer",
+                    fontSize: 16,
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
                   }}
-                />
-              ) : (
-                <svg
-                  width="14"
-                  height="14"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="#fff"
-                  strokeWidth="2.5"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
                 >
-                  <line x1="22" y1="2" x2="11" y2="13" />
-                  <polygon points="22 2 15 22 11 13 2 9 22 2" />
-                </svg>
-              )}
-            </button>
+                  +
+                </button>
+
+                {/* Seçili proje göster */}
+                {selectedProjectId && (
+                  <span
+                    style={{
+                      fontSize: 12,
+                      color: "var(--color-accent)",
+                      background: "var(--color-accent-bg)",
+                      padding: "3px 8px",
+                      borderRadius: 6,
+                    }}
+                  >
+                    {projects.find((p) => p.id === selectedProjectId)?.name}
+                  </span>
+                )}
+              </div>
+
+              {/* Gönder butonu */}
+              <button
+                onClick={handleSubmit}
+                disabled={loading || !diff}
+                style={{
+                  width: 32,
+                  height: 32,
+                  borderRadius: 10,
+                  background:
+                    loading || !diff
+                      ? "var(--color-muted)"
+                      : "var(--color-accent)",
+                  border: "none",
+                  cursor: loading || !diff ? "not-allowed" : "pointer",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  transition: "background 0.15s",
+                }}
+              >
+                {loading ? (
+                  <span
+                    style={{
+                      width: 12,
+                      height: 12,
+                      border: "2px solid rgba(255,255,255,0.3)",
+                      borderTop: "2px solid #fff",
+                      borderRadius: "50%",
+                      display: "inline-block",
+                      animation: "spin 0.8s linear infinite",
+                    }}
+                  />
+                ) : (
+                  <svg
+                    width="14"
+                    height="14"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="#fff"
+                    strokeWidth="2.5"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    <line x1="22" y1="2" x2="11" y2="13" />
+                    <polygon points="22 2 15 22 11 13 2 9 22 2" />
+                  </svg>
+                )}
+              </button>
+            </div>
           </div>
         </div>
       </div>
