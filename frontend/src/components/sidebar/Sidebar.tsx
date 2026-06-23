@@ -90,6 +90,7 @@ export function Sidebar() {
   const [projects, setProjects] = useState<any[]>([]);
   const [showNewProject, setShowNewProject] = useState(false);
   const [newProjectName, setNewProjectName] = useState("");
+  const [showUserMenu, setShowUserMenu] = useState(false);
 
   const { user } = useAuth();
   const [recentAnalyses, setRecentAnalyses] = useState<Analysis[]>([]);
@@ -375,34 +376,211 @@ export function Sidebar() {
         )}
       </div>
 
-      {/* Bottom — Logout */}
-      <div
-        style={{
-          borderTop: "1px solid var(--color-border)",
-          padding: collapsed ? "12px 0" : "12px 14px",
-        }}
-      >
+      <div style={{ position: "relative" }}>
         <button
-          onClick={handleLogout}
+          onClick={() => setShowUserMenu(!showUserMenu)}
           style={{
             display: "flex",
             alignItems: "center",
-            gap: 8,
-            padding: collapsed ? "7px 0" : "6px 10px",
+            gap: 12,
+            padding: "15px 17px",
             justifyContent: collapsed ? "center" : "flex-start",
-            borderRadius: 7,
-            fontSize: 13.5,
-            color: "var(--color-muted)",
-            background: "none",
-            border: "none",
-            cursor: "pointer",
             width: "100%",
+            background: "none",
+            border: "1px solid var(--color-border)",
+            cursor: "pointer",
+            color: "var(--color-text)",
             fontFamily: "inherit",
           }}
         >
-          <IconLogout />
-          {!collapsed && "Logout"}
+          {/* Sol taraftaki Yuvarlak Profil Avatarı */}
+          <div
+            style={{
+              width: 32,
+              height: 32,
+              borderRadius: "50%",
+              background: "var(--color-accent)",
+              color: "#fff",
+              fontSize: 13,
+              fontWeight: 600,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              flexShrink: 0,
+            }}
+          >
+            {(user?.user_metadata?.full_name ||
+              user?.email ||
+              "?")[0].toUpperCase()}
+          </div>
+
+          {/* Claude Tarzı Alt Alta İsim ve Email Bölümü */}
+          {!collapsed && (
+            <div
+              style={{
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "flex-start",
+                overflow: "hidden",
+                textAlign: "left",
+                lineHeight: "1.4",
+              }}
+            >
+              <span
+                style={{
+                  fontSize: 13,
+                  fontWeight: 500,
+                  color: "var(--color-text)",
+                  overflow: "hidden",
+                  textOverflow: "ellipsis",
+                  whiteSpace: "nowrap",
+                  width: "100%",
+                }}
+              >
+                {user?.user_metadata?.full_name || user?.email?.split("@")[0]}
+              </span>
+              <span
+                style={{
+                  fontSize: 11,
+                  color: "var(--color-muted)",
+                  overflow: "hidden",
+                  textOverflow: "ellipsis",
+                  whiteSpace: "nowrap",
+                  width: "100%",
+                }}
+              >
+                {user?.email}
+              </span>
+            </div>
+          )}
         </button>
+
+        {/* Dropdown Menü (Dokunulmadı) */}
+        {showUserMenu && (
+          <div
+            style={{
+              position: "fixed",
+              bottom: 60,
+              left: 8,
+              width: 204,
+              background: "var(--color-surface)",
+              border: "1px solid var(--color-border)",
+              borderRadius: 10,
+              padding: 6,
+              boxShadow: "0 4px 16px rgba(0,0,0,0.15)",
+              zIndex: 1000,
+            }}
+          >
+            <div
+              style={{
+                padding: "8px 10px",
+                borderBottom: "1px solid var(--color-border)",
+                marginBottom: 4,
+              }}
+            >
+              <p
+                style={{
+                  fontSize: 13,
+                  fontWeight: 500,
+                  color: "var(--color-text)",
+                }}
+              >
+                {user?.user_metadata?.full_name || user?.email?.split("@")[0]}
+              </p>
+              <p style={{ fontSize: 11, color: "var(--color-muted)" }}>
+                {user?.email}
+              </p>
+            </div>
+
+            <button
+              onClick={() => {}}
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: 8,
+                width: "100%",
+                padding: "7px 10px",
+                borderRadius: 6,
+                background: "none",
+                border: "none",
+                cursor: "pointer",
+                fontSize: 13,
+                color: "var(--color-text)",
+                fontFamily: "inherit",
+              }}
+            >
+              ⚙️ Settings
+            </button>
+
+            <button
+              onClick={() => {}}
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: 8,
+                width: "100%",
+                padding: "7px 10px",
+                borderRadius: 6,
+                background: "none",
+                border: "none",
+                cursor: "pointer",
+                fontSize: 13,
+                color: "var(--color-text)",
+                fontFamily: "inherit",
+              }}
+            >
+              Language
+            </button>
+
+            <button
+              onClick={() => {}}
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: 8,
+                width: "100%",
+                padding: "7px 10px",
+                borderRadius: 6,
+                background: "none",
+                border: "none",
+                cursor: "pointer",
+                fontSize: 13,
+                color: "var(--color-text)",
+                fontFamily: "inherit",
+              }}
+            >
+              🌙 Theme
+            </button>
+
+            <div
+              style={{
+                borderTop: "1px solid var(--color-border)",
+                marginTop: 4,
+                paddingTop: 4,
+              }}
+            >
+              <button
+                onClick={handleLogout}
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 8,
+                  width: "100%",
+                  padding: "7px 10px",
+                  borderRadius: 6,
+                  background: "none",
+                  border: "none",
+                  cursor: "pointer",
+                  fontSize: 13,
+                  color: "var(--color-del)",
+                  fontFamily: "inherit",
+                }}
+              >
+                Log out
+              </button>
+            </div>
+          </div>
+        )}
       </div>
     </aside>
   );
