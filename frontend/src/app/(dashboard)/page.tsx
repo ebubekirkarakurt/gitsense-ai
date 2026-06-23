@@ -535,7 +535,7 @@ export default function Home() {
           borderTop: "1px solid var(--color-border)",
           display: "flex",
           justifyContent: "center",
-          zIndex: -1,
+          zIndex: 10,
         }}
       >
         <div style={{ width: "100%", maxWidth: 640, position: "relative" }}>
@@ -544,7 +544,7 @@ export default function Home() {
               display: "flex",
               alignItems: "center",
               gap: 10,
-              background: "var(--color-surface)",
+              background: "var(--color-bg)",
               border: "1px solid var(--color-border)",
               borderRadius: 14,
               padding: "10px 14px",

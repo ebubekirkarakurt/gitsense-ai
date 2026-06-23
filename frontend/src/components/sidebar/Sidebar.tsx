@@ -308,14 +308,17 @@ export function Sidebar() {
                   Recent
                 </p>
                 {recentAnalyses.map((a) => (
-                  <div
+                  <Link
                     key={a.id}
+                    href={`/analysis/${a.id}`}
                     style={{
+                      display: "block",
                       padding: "6px 10px",
                       borderRadius: 7,
                       fontSize: 13,
                       color: "var(--color-muted)",
                       marginBottom: 1,
+                      textDecoration: "none",
                     }}
                   >
                     <span
@@ -329,7 +332,7 @@ export function Sidebar() {
                       {a.title}
                     </span>
                     <span style={{ fontSize: 11 }}>{a.timeAgo}</span>
-                  </div>
+                  </Link>
                 ))}
               </div>
             )}
