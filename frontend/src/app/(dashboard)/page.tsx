@@ -442,72 +442,66 @@ export default function Home() {
         </div>
 
         {/* Sağ panel — sadece dolu durumda */}
-        {!isEmpty && (
-          <div
-            style={{
-              width: 240,
-              flexShrink: 0,
-              display: "flex",
-              flexDirection: "column",
-              gap: 24,
-              paddingTop: 8,
-            }}
-          >
-            <div>
-              <p
-                style={{
-                  fontSize: 11,
-                  fontWeight: 600,
-                  color: "var(--color-muted)",
-                  textTransform: "uppercase",
-                  letterSpacing: "0.06em",
-                  marginBottom: 10,
-                }}
-              >
-                Changes
-              </p>
-              {stats ? (
-                <div
-                  style={{ display: "flex", flexDirection: "column", gap: 6 }}
+        {/* Sağ panel — her zaman görünür */}
+        <div
+          style={{
+            width: 240,
+            flexShrink: 0,
+            display: "flex",
+            flexDirection: "column",
+            gap: 24,
+            paddingTop: 8,
+          }}
+        >
+          {stats ? (
+            <>
+              <div>
+                <p
+                  style={{
+                    fontSize: 11,
+                    fontWeight: 600,
+                    color: "var(--color-muted)",
+                    textTransform: "uppercase",
+                    letterSpacing: "0.06em",
+                    marginBottom: 10,
+                  }}
                 >
-                  <span
-                    style={{
-                      color: "var(--color-add)",
-                      fontWeight: 600,
-                      fontSize: 14,
-                    }}
-                  >
-                    +{stats.additions} additions
-                  </span>
-                  <span
-                    style={{
-                      color: "var(--color-del)",
-                      fontWeight: 600,
-                      fontSize: 14,
-                    }}
-                  >
-                    -{stats.deletions} deletions
-                  </span>
-                </div>
-              ) : (
-                <p style={{ fontSize: 13, color: "var(--color-muted)" }}>—</p>
-              )}
-            </div>
-
-            <div>
-              <p
-                style={{
-                  fontSize: 11,
-                  fontWeight: 600,
-                  color: "var(--color-muted)",
-                  textTransform: "uppercase",
-                  letterSpacing: "0.06em",
-                  marginBottom: 10,
-                }}
-              >
-                Files Changed
-              </p>
-              {stats ? (
+                  Changes
+                </p>
+                <span
+                  style={{
+                    color: "var(--color-add)",
+                    fontWeight: 600,
+                    fontSize: 14,
+                    display: "block",
+                  }}
+                >
+                  +{stats.additions} additions
+                </span>
+                <span
+                  style={{
+                    color: "var(--color-del)",
+                    fontWeight: 600,
+                    fontSize: 14,
+                    display: "block",
+                  }}
+                >
+                  -{stats.deletions} deletions
+                </span>
+              </div>
+              <div>
+                <p
+                  style={{
+                    fontSize: 11,
+                    fontWeight: 600,
+                    color: "var(--color-muted)",
+                    textTransform: "uppercase",
+                    letterSpacing: "0.06em",
+                    marginBottom: 10,
+                  }}
+                >
+                  Files Changed
+                </p>
                 <div
                   style={{ display: "flex", flexDirection: "column", gap: 6 }}
                 >
@@ -531,14 +525,118 @@ export default function Home() {
                     </span>
                   ))}
                 </div>
-              ) : (
-                <p style={{ fontSize: 13, color: "var(--color-muted)" }}>
-                  No files analyzed yet
+              </div>
+            </>
+          ) : null}
+
+          {/* Divider */}
+          <div style={{ borderTop: "1px solid var(--color-border)" }} />
+
+          {/* How to use */}
+          <div>
+            <p
+              style={{
+                fontSize: 11,
+                fontWeight: 600,
+                color: "var(--color-muted)",
+                textTransform: "uppercase",
+                letterSpacing: "0.06em",
+                marginBottom: 12,
+              }}
+            >
+              How to use
+            </p>
+            <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+              <div>
+                <p
+                  style={{
+                    fontSize: 12,
+                    fontWeight: 500,
+                    color: "var(--color-text)",
+                    marginBottom: 4,
+                  }}
+                >
+                  1. Get your diff
                 </p>
-              )}
+                <code
+                  style={{
+                    fontSize: 11,
+                    display: "block",
+                    background: "var(--color-surface)",
+                    border: "1px solid var(--color-border)",
+                    borderRadius: 6,
+                    padding: "6px 10px",
+                    color: "var(--color-add)",
+                    fontFamily: "monospace",
+                  }}
+                >
+                  git diff {">"} changes.txt
+                </code>
+              </div>
+              <div>
+                <p
+                  style={{
+                    fontSize: 12,
+                    fontWeight: 500,
+                    color: "var(--color-text)",
+                    marginBottom: 4,
+                  }}
+                >
+                  2. Staged changes
+                </p>
+                <code
+                  style={{
+                    fontSize: 11,
+                    display: "block",
+                    background: "var(--color-surface)",
+                    border: "1px solid var(--color-border)",
+                    borderRadius: 6,
+                    padding: "6px 10px",
+                    color: "var(--color-add)",
+                    fontFamily: "monospace",
+                  }}
+                >
+                  git diff --cached {">"} changes.txt
+                </code>
+              </div>
+              <div>
+                <p
+                  style={{
+                    fontSize: 12,
+                    fontWeight: 500,
+                    color: "var(--color-text)",
+                    marginBottom: 4,
+                  }}
+                >
+                  3. Last commit
+                </p>
+                <code
+                  style={{
+                    fontSize: 11,
+                    display: "block",
+                    background: "var(--color-surface)",
+                    border: "1px solid var(--color-border)",
+                    borderRadius: 6,
+                    padding: "6px 10px",
+                    color: "var(--color-add)",
+                    fontFamily: "monospace",
+                  }}
+                >
+                  git diff HEAD {">"} changes.txt
+                </code>
+              </div>
+              <p
+                style={{
+                  fontSize: 12,
+                  color: "var(--color-muted)",
+                  lineHeight: 1.6,
+                }}
+              >
+                Then upload the file or paste the content directly.
+              </p>
             </div>
           </div>
-        )}
+        </div>
       </div>
 
       {/* Alt sabit input — ortalanmış */}
