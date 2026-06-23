@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { DiffViewer } from "@/components/DiffViewer";
 import { useAuth } from "@/hooks/useAuth";
+import { supabase } from "@/lib/supabase";
 
 export default function Home() {
   const [diff, setDiff] = useState("");
@@ -19,8 +20,9 @@ export default function Home() {
     deletions: number;
     fileNames: string[];
   } | null>(null);
+
   const { user, loading: authLoading } = useAuth();
-  
+
   if (authLoading)
     return (
       <div
@@ -61,6 +63,20 @@ export default function Home() {
       const data = await response.json();
       setSuggestions(data.suggestions || []);
       setStats(data.stats || null);
+
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+
+      if (user) {
+        await supabase.from("analyses").insert({
+          user_id: user.id,
+          title: `Analysis ${new Date().toLocaleDateString()}`,
+          diff_text: diff,
+          suggestions: data.suggestions,
+          stats: data.stats,
+        });
+      }
     } catch {
       setError(
         "Bir hata oluştu. Backend uyuyor olabilir, 30 saniye sonra tekrar dene.",
