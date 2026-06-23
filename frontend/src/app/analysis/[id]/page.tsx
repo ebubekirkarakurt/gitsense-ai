@@ -10,6 +10,51 @@ export default function AnalysisPage() {
   const [analysis, setAnalysis] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [shared, setShared] = useState(false);
+  const [chatMessage, setChatMessage] = useState("");
+  const [chatHistory, setChatHistory] = useState<
+    { role: "user" | "assistant"; content: string }[]
+  >([]);
+  const [chatLoading, setChatLoading] = useState(false);
+
+  const handleChat = async () => {
+    if (!chatMessage.trim()) return;
+    setChatLoading(true);
+
+    const userMsg = { role: "user" as const, content: chatMessage };
+    const currentMessage = chatMessage;
+    setChatMessage("");
+    setChatHistory((prev) => [...prev, userMsg]);
+
+    const response = await fetch(
+      `${process.env.NEXT_PUBLIC_API_URL}/api/chat`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          message: currentMessage,
+          diff: analysis.diff_text,
+          history: chatHistory,
+        }),
+      },
+    );
+
+    const data = await response.json();
+
+    const newHistory = [
+      ...chatHistory,
+      userMsg,
+      { role: "assistant" as const, content: data.reply },
+    ];
+
+    setChatHistory(newHistory);
+
+    await supabase
+      .from("analyses")
+      .update({ chat_history: newHistory })
+      .eq("id", id);
+
+    setChatLoading(false);
+  };
 
   useEffect(() => {
     if (!id) return;
@@ -21,6 +66,11 @@ export default function AnalysisPage() {
       .single()
       .then(({ data }) => {
         setAnalysis(data);
+
+        if (data?.chat_history) {
+          setChatHistory(data.chat_history);
+        }
+
         setLoading(false);
       });
   }, [id]);
@@ -54,9 +104,18 @@ export default function AnalysisPage() {
     );
 
   return (
-    <div style={{ flex: 1, display: "flex", gap: 32, padding: "40px 48px" }}>
+    <div
+      style={{ flex: 1, display: "flex", height: "100vh", overflow: "hidden" }}
+    >
       {/* Sol */}
-      <div style={{ flex: 1, minWidth: 0 }}>
+      <div
+        style={{
+          flex: 1,
+          minWidth: 0,
+          overflowY: "auto",
+          padding: "40px 48px",
+        }}
+      >
         {/* Üst bar */}
         <div
           style={{
@@ -242,6 +301,149 @@ export default function AnalysisPage() {
             ))}
           </div>
         </div>
+        {/* Chat */}
+        <div style={{ marginTop: 32 }}>
+          <p
+            style={{
+              fontSize: 13,
+              fontWeight: 600,
+              color: "var(--color-text)",
+              marginBottom: 0,
+            }}
+          >
+            Ask about this diff
+          </p>
+
+          {/* Mesajlar */}
+          <div
+            style={{
+              display: "flex",
+              flexDirection: "column",
+              gap: 12,
+              marginBottom: 12,
+              maxHeight: 300,
+              overflowY: "auto",
+            }}
+          >
+            {chatHistory.map((msg, i) => (
+              <div
+                key={i}
+                style={{
+                  display: "flex",
+                  justifyContent:
+                    msg.role === "user" ? "flex-end" : "flex-start",
+                }}
+              >
+                <div
+                  style={{
+                    maxWidth: "80%",
+                    padding: "10px 14px",
+                    borderRadius: 10,
+                    fontSize: 13,
+                    background:
+                      msg.role === "user"
+                        ? "var(--color-accent)"
+                        : "var(--color-surface)",
+                    color: msg.role === "user" ? "#fff" : "var(--color-text)",
+                    border:
+                      msg.role === "assistant"
+                        ? "1px solid var(--color-border)"
+                        : "none",
+                    whiteSpace: "pre-wrap",
+                  }}
+                >
+                  {msg.content}
+                </div>
+              </div>
+            ))}
+            {chatLoading && (
+              <div style={{ display: "flex", justifyContent: "flex-start" }}>
+                <div
+                  style={{
+                    padding: "10px 14px",
+                    borderRadius: 10,
+                    fontSize: 13,
+                    background: "var(--color-surface)",
+                    border: "1px solid var(--color-border)",
+                    color: "var(--color-muted)",
+                  }}
+                >
+                  Thinking...
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Input */}
+          <div
+            style={{
+              position: "sticky",
+              bottom: 0,
+              background: "var(--color-bg)",
+              paddingTop: 8,
+            }}
+          >
+            <div
+              style={{
+                display: "flex",
+                gap: 8,
+                background: "var(--color-surface)",
+                border: "1px solid var(--color-border)",
+                borderRadius: 10,
+                padding: "8px 12px",
+              }}
+            >
+              <input
+                value={chatMessage}
+                onChange={(e) => setChatMessage(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") handleChat();
+                }}
+                placeholder="Bu değişiklik hakkında soru sor..."
+                style={{
+                  flex: 1,
+                  background: "none",
+                  border: "none",
+                  outline: "none",
+                  fontSize: 13,
+                  color: "var(--color-text)",
+                }}
+              />
+              <button
+                onClick={handleChat}
+                disabled={chatLoading || !chatMessage.trim()}
+                style={{
+                  background:
+                    chatLoading || !chatMessage.trim()
+                      ? "var(--color-muted)"
+                      : "var(--color-accent)",
+                  border: "none",
+                  borderRadius: 8,
+                  width: 32,
+                  height: 32,
+                  cursor: "pointer",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
+              >
+                <svg
+                  width="14"
+                  height="14"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="#fff"
+                  strokeWidth="2.5"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <line x1="22" y1="2" x2="11" y2="13" />
+                  <polygon points="22 2 15 22 11 13 2 9 22 2" />
+                </svg>
+              </button>
+            </div>
+          </div>
+        </div>
       </div>
 
       {/* Sağ panel */}
@@ -252,7 +454,8 @@ export default function AnalysisPage() {
           display: "flex",
           flexDirection: "column",
           gap: 24,
-          paddingTop: 8,
+          padding: "40px 24px 40px 0",
+          overflowY: "auto",
         }}
       >
         <div>
