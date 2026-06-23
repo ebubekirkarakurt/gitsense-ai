@@ -1,60 +1,66 @@
 @import "tailwindcss";
 
-*, *::before, *::after {
+*,
+*::before,
+*::after {
   box-sizing: border-box;
   margin: 0;
   padding: 0;
 }
 
 * {
-  transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+  transition:
+    background-color 0.2s ease,
+    color 0.2s ease,
+    border-color 0.2s ease;
 }
 
 :root {
   /* backgrounds */
-  --color-bg:      #EFEFED;
-  --color-surface: #FFFFFF;
-  --color-border:  #E8E7E4;
+  --color-bg: #efefed;
+  --color-surface: #ffffff;
+  --color-border: #e8e7e4;
 
   /* text */
-  --color-text:    #1A1A19;
-  --color-muted:   #8A8A85;
+  --color-text: #1a1a19;
+  --color-muted: #8a8a85;
 
   /* accent */
-  --color-accent:    #2D5BFF;
-  --color-accent-bg: #EEF2FF;
+  --color-accent: #2d5bff;
+  --color-accent-bg: #eef2ff;
 
   /* diff */
-  --color-add:    #1A7A4A;
-  --color-add-bg: #F0FFF6;
-  --color-del:    #C0392B;
-  --color-del-bg: #FFF5F5;
+  --color-add: #1a7a4a;
+  --color-add-bg: #f0fff6;
+  --color-del: #c0392b;
+  --color-del-bg: #fff5f5;
 
   /* commit tags */
-  --color-feat-bg:   #EEF2FF;
-  --color-feat-text: #2D5BFF;
-  --color-fix-bg:    #FFF4E6;
-  --color-fix-text:  #C05200;
-  --color-ref-bg:    #F0FFF4;
-  --color-ref-text:  #1A7A4A;
+  --color-feat-bg: #eef2ff;
+  --color-feat-text: #2d5bff;
+  --color-fix-bg: #fff4e6;
+  --color-fix-text: #c05200;
+  --color-ref-bg: #f0fff4;
+  --color-ref-text: #1a7a4a;
 
   /* misc */
-  --radius:  10px;
-  --shadow:  0 1px 3px rgba(0,0,0,.06);
+  --radius: 10px;
+  --shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
 }
 
 [data-theme="dark"] {
-  --color-bg:      #0a0a0f;
-  --color-surface: #0d1117;
-  --color-border:  rgba(255,255,255,0.08);
-  --color-text:    #e6edf3;
-  --color-muted:   #7d8590;
-  --color-accent:    #7c3aed;
-  --color-accent-bg: #1e1b4b;
-  --color-add:    #4ade80;
-  --color-add-bg: #0d2818;
-  --color-del:    #f87171;
-  --color-del-bg: #2d1010;
+  --color-bg: #09090b;
+  --color-surface: #111113;
+  --color-surface-2: #18181b;
+  --color-border: rgba(255, 255, 255, 0.08);
+  --color-text: #fafafa;
+  --color-muted: #a1a1aa;
+  --color-accent: #7c3aed;
+  --color-accent-bg: rgba(124, 58, 237, 0.12);
+  --color-add: #4ade80;
+  --color-add-bg: rgba(74, 222, 128, 0.08);
+  --color-del: #fb7185;
+  --color-del-bg: rgba(251, 113, 133, 0.08);
 }
 
 body {
@@ -67,13 +73,23 @@ body {
 }
 
 @keyframes spin {
-  to { transform: rotate(360deg); }
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 /* scrollbar */
-::-webkit-scrollbar { width: 4px; height: 4px; }
-::-webkit-scrollbar-thumb { background: var(--color-border); border-radius: 4px; }
-::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar {
+  width: 4px;
+  height: 4px;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--color-border);
+  border-radius: 4px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
 
 a:hover {
   opacity: 0.85;

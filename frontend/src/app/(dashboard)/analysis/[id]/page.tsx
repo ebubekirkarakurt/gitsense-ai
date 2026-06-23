@@ -198,7 +198,16 @@ export default function AnalysisPage() {
         >
           Git Diff
         </h2>
-        <DiffViewer diff={analysis.diff_text} />
+        <div
+          style={{
+            maxHeight: 300,
+            overflowY: "auto",
+            borderRadius: 10,
+            border: "1px solid var(--color-border)",
+          }}
+        >
+          <DiffViewer diff={analysis.diff_text} />
+        </div>
 
         {/* Suggestions */}
         <div style={{ marginTop: 24 }}>
@@ -377,10 +386,15 @@ export default function AnalysisPage() {
           {/* Input */}
           <div
             style={{
-              position: "sticky",
+              position: "fixed",
               bottom: 0,
+              left: 220,
+              right: 0,
+              padding: "12px 48px 20px",
               background: "var(--color-bg)",
-              paddingTop: 8,
+              borderTop: "1px solid var(--color-border)",
+              zIndex: 10,
+              alignItems: "center",
             }}
           >
             <div
@@ -391,6 +405,8 @@ export default function AnalysisPage() {
                 border: "1px solid var(--color-border)",
                 borderRadius: 10,
                 padding: "8px 12px",
+                maxWidth: 720,
+                margin: "0 auto",
               }}
             >
               <input

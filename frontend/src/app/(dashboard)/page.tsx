@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { DiffViewer } from "@/components/DiffViewer";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/lib/supabase";
+import Link from "next/link";
 
 export default function Home() {
   const [diff, setDiff] = useState("");
@@ -13,21 +14,20 @@ export default function Home() {
   const [loading, setLoading] = useState(false);
   const [copiedIndex, setCopiedIndex] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [showMenu, setShowMenu] = useState(false);
   const [stats, setStats] = useState<{
     files: number;
     additions: number;
     deletions: number;
     fileNames: string[];
   } | null>(null);
-
+  const [recentAnalyses, setRecentAnalyses] = useState<any[]>([]);
   const { user, loading: authLoading } = useAuth();
   const [projects, setProjects] = useState<any[]>([]);
+  const [copiedCmd, setCopiedCmd] = useState<number | null>(null);
   const [selectedProjectId, setSelectedProjectId] = useState<string | null>(
     () => {
-      if (typeof window !== "undefined") {
+      if (typeof window !== "undefined")
         return localStorage.getItem("selectedProjectId");
-      }
       return null;
     },
   );
@@ -39,6 +39,13 @@ export default function Home() {
       .select("*")
       .eq("user_id", user.id)
       .then(({ data }) => setProjects(data || []));
+    supabase
+      .from("analyses")
+      .select("*")
+      .eq("user_id", user.id)
+      .order("created_at", { ascending: false })
+      .limit(3)
+      .then(({ data }) => setRecentAnalyses(data || []));
   }, [user]);
 
   if (authLoading)
@@ -65,7 +72,6 @@ export default function Home() {
     if (!diff) return;
     setLoading(true);
     setError(null);
-
     try {
       const response = await fetch(
         `${process.env.NEXT_PUBLIC_API_URL}/api/commit`,
@@ -75,25 +81,23 @@ export default function Home() {
           body: JSON.stringify({ diff }),
         },
       );
-
       if (!response.ok) throw new Error("Sunucu hatası.");
-
       const data = await response.json();
       setSuggestions(data.suggestions || []);
       setStats(data.stats || null);
-
       const {
         data: { user },
       } = await supabase.auth.getUser();
-
-      await supabase.from("analyses").insert({
-        user_id: user.id,
-        title: data.title || `Analysis ${new Date().toLocaleDateString()}`,
-        diff_text: diff,
-        suggestions: data.suggestions,
-        stats: data.stats,
-        project_id: selectedProjectId,
-      });
+      if (user) {
+        await supabase.from("analyses").insert({
+          user_id: user.id,
+          title: data.title || `Analysis ${new Date().toLocaleDateString()}`,
+          diff_text: diff,
+          suggestions: data.suggestions,
+          stats: data.stats,
+          project_id: selectedProjectId,
+        });
+      }
     } catch {
       setError(
         "Bir hata oluştu. Backend uyuyor olabilir, 30 saniye sonra tekrar dene.",
@@ -109,818 +113,721 @@ export default function Home() {
     <div
       style={{
         flex: 1,
-        overflow: "auto",
         display: "flex",
-        gap: 32,
-        padding: "40px 48px 160px",
+        flexDirection: "column",
+        height: "100vh",
+        overflow: "hidden",
       }}
     >
-      {/* Ana içerik */}
       <div
         style={{
           flex: 1,
-          overflow: "auto",
-          display: "flex",
-          gap: 32,
-          padding: "40px 48px 120px",
+          overflowY: "auto",
+          padding: isEmpty ? "60px 48px 160px" : "40px 48px 160px",
         }}
       >
-        {/* Sol */}
-        <div
-          style={{
-            flex: 1,
-            minWidth: 0,
-            display: "flex",
-            flexDirection: "column",
-          }}
-        >
-          {isEmpty ? (
-            // ── BOŞ DURUM ──
-            <div
-              style={{
-                flex: 1,
-                display: "flex",
-                flexDirection: "column",
-                alignItems: "center",
-                justifyContent: "center",
-                textAlign: "center",
-                minHeight: 400,
-              }}
-            >
+        {isEmpty ? (
+          <div style={{ maxWidth: 760, margin: "0 auto" }}>
+            {/* Hero */}
+            <div style={{ textAlign: "center", marginBottom: 40 }}>
               <h1
                 style={{
-                  fontSize: 28,
-                  fontWeight: 600,
+                  fontSize: 36,
+                  fontWeight: 700,
                   color: "var(--color-text)",
-                  marginBottom: 8,
+                  letterSpacing: "-0.02em",
+                  marginBottom: 10,
                 }}
               >
                 Merhaba{" "}
                 {user?.user_metadata?.full_name || user?.email?.split("@")[0]}{" "}
                 👋
               </h1>
-              <p style={{ fontSize: 15, color: "var(--color-muted)" }}>
-                Bugün neyi commitliyoruz?
-              </p>
-            </div>
-          ) : (
-            // ── DOLU DURUM ──
-            <>
-              {/* Başlık */}
-              <div
+              <p
                 style={{
-                  display: "flex",
-                  justifyContent: "space-between",
-                  alignItems: "flex-start",
-                  marginBottom: 24,
+                  fontSize: 15,
+                  color: "var(--color-muted)",
+                  marginBottom: 4,
                 }}
               >
-                <div>
-                  <h1
-                    style={{
-                      fontSize: 22,
-                      fontWeight: 600,
-                      color: "var(--color-text)",
-                      marginBottom: 4,
-                    }}
-                  >
-                    Analysis Complete
-                  </h1>
-                  <p style={{ color: "var(--color-muted)", fontSize: 13 }}>
-                    Analyzed just now
-                  </p>
-                </div>
+                Bugün neyi commitliyoruz?
+              </p>
+              <p
+                style={{
+                  fontSize: 13,
+                  color: "var(--color-muted)",
+                  opacity: 0.7,
+                }}
+              >
+                Git diff'ini yapıştır veya dosya yükle, size en iyi commit
+                mesajlarını oluşturalım.
+              </p>
+            </div>
 
-                {suggestions.length > 0 && (
-                  <button
-                    onClick={() => {
-                      const allCommits = suggestions
-                        .map((s) => s.message)
-                        .join("\n");
-                      navigator.clipboard.writeText(allCommits);
-                    }}
+            {/* Composer */}
+            <div
+              style={{
+                background: "var(--color-surface)",
+                border: "1px solid var(--color-border)",
+                borderRadius: 16,
+                overflow: "hidden",
+                marginBottom: 40,
+                boxShadow: "0 4px 24px rgba(0,0,0,0.08)",
+              }}
+            >
+              <div style={{ display: "flex" }}>
+                <div
+                  style={{
+                    width: 180,
+                    flexShrink: 0,
+                    borderRight: "1px solid var(--color-border)",
+                    padding: "24px 20px",
+                    display: "flex",
+                    flexDirection: "column",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    gap: 10,
+                  }}
+                >
+                  <div
                     style={{
+                      width: 44,
+                      height: 44,
+                      borderRadius: 12,
+                      background: "var(--color-accent-bg)",
                       display: "flex",
                       alignItems: "center",
-                      gap: 6,
-                      padding: "8px 14px",
-                      borderRadius: 8,
-                      border: "1px solid var(--color-border)",
-                      background: "var(--color-surface)",
-                      color: "var(--color-text)",
+                      justifyContent: "center",
+                      fontSize: 22,
+                    }}
+                  >
+                    📄
+                  </div>
+                  <p
+                    style={{
                       fontSize: 13,
                       fontWeight: 500,
+                      color: "var(--color-text)",
+                      textAlign: "center",
+                    }}
+                  >
+                    Diff dosyanızı yükleyin
+                  </p>
+                  <label
+                    htmlFor="file-upload-hero"
+                    style={{
+                      padding: "5px 14px",
+                      borderRadius: 7,
+                      border: "1px solid var(--color-border)",
+                      background: "var(--color-bg)",
+                      fontSize: 12,
+                      color: "var(--color-text)",
                       cursor: "pointer",
                     }}
                   >
-                    Share
-                  </button>
-                )}
-              </div>
-
-              {/* Stats bar */}
-              {stats && (
+                    Dosya Seç
+                  </label>
+                  <input
+                    id="file-upload-hero"
+                    type="file"
+                    accept=".txt"
+                    style={{ display: "none" }}
+                    onChange={(e) => {
+                      const f = e.target.files?.[0];
+                      if (!f) return;
+                      const r = new FileReader();
+                      r.onload = (ev) => setDiff(ev.target?.result as string);
+                      r.readAsText(f);
+                    }}
+                  />
+                </div>
                 <div
                   style={{
                     display: "flex",
-                    gap: 24,
-                    padding: "10px 16px",
-                    background: "var(--color-surface)",
-                    border: "1px solid var(--color-border)",
-                    borderRadius: 10,
-                    marginBottom: 20,
-                    fontSize: 13,
-                    fontWeight: 600,
+                    alignItems: "center",
+                    justifyContent: "center",
+                    width: 40,
+                    flexShrink: 0,
+                    fontSize: 12,
+                    color: "var(--color-muted)",
                   }}
                 >
-                  <span style={{ color: "var(--color-add)" }}>
-                    +{stats.additions} additions
-                  </span>
-                  <span style={{ color: "var(--color-del)" }}>
-                    -{stats.deletions} deletions
-                  </span>
-                  <span
-                    style={{ color: "var(--color-muted)", fontWeight: 400 }}
-                  >
-                    {stats.files} file{stats.files !== 1 ? "s" : ""} changed
-                  </span>
-                  <span
-                    style={{
-                      color: "var(--color-muted)",
-                      fontWeight: 400,
-                      marginLeft: "auto",
-                    }}
-                  >
-                    No breaking changes
-                  </span>
+                  or
                 </div>
-              )}
-
-              {/* Git Diff */}
-              {diff && (
-                <div style={{ marginBottom: 12 }}>
-                  <div
-                    style={{
-                      display: "flex",
-                      justifyContent: "space-between",
-                      alignItems: "center",
-                      marginBottom: 10,
-                    }}
-                  >
-                    <h2
+                <div style={{ flex: 1 }}>
+                  {diff ? (
+                    <div
                       style={{
-                        fontSize: 15,
-                        fontWeight: 600,
-                        color: "var(--color-text)",
+                        position: "relative",
+                        maxHeight: 200,
+                        overflowY: "auto",
+                        borderBottom: "1px solid var(--color-border)",
+                        width: "78%",
                       }}
                     >
-                      Git Diff
-                    </h2>
-                    <button
-                      onClick={() => {
-                        setDiff("");
-                        setSuggestions([]);
-                        setStats(null);
-                      }}
+                      <DiffViewer diff={diff} />
+                      <button
+                        onClick={() => setDiff("")}
+                        style={{
+                          position: "absolute",
+                          top: 8,
+                          right: 8,
+                          background: "var(--color-surface)",
+                          border: "1px solid var(--color-border)",
+                          borderRadius: 6,
+                          padding: "3px 8px",
+                          fontSize: 11,
+                          color: "var(--color-muted)",
+                          cursor: "pointer",
+                          zIndex: 1,
+                        }}
+                      >
+                        ✕ Clear
+                      </button>
+                    </div>
+                  ) : (
+                    <textarea
+                      value={diff}
+                      onChange={(e) => setDiff(e.target.value)}
+                      placeholder="Git diff'ini buraya yapıştırın..."
                       style={{
+                        width: "100%",
+                        minHeight: 160,
                         background: "none",
                         border: "none",
-                        fontSize: 12,
-                        color: "var(--color-muted)",
-                        cursor: "pointer",
+                        outline: "none",
+                        padding: 16,
+                        fontSize: 13,
+                        fontFamily: "monospace",
+                        color: "var(--color-text)",
+                        resize: "none",
+                        lineHeight: 1.6,
                       }}
-                    >
-                      ✕ Clear
-                    </button>
-                  </div>
-                  <DiffViewer diff={diff} />
+                    />
+                  )}
                 </div>
-              )}
-
-              {/* Hata */}
-              {error && (
-                <div
+              </div>
+              <div
+                style={{
+                  borderTop: "1px solid var(--color-border)",
+                  padding: "10px 16px",
+                  display: "flex",
+                  justifyContent: "flex-end",
+                  alignItems: "center",
+                }}
+              >
+                <button
+                  onClick={handleSubmit}
+                  disabled={loading || !diff}
                   style={{
-                    background: "var(--color-del-bg)",
-                    border: "1px solid var(--color-del)",
-                    borderRadius: 10,
-                    padding: "12px 16px",
-                    marginBottom: 16,
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 8,
+                    padding: "9px 22px",
+                    borderRadius: 9,
+                    background:
+                      loading || !diff
+                        ? "var(--color-border)"
+                        : "var(--color-accent)",
+                    border: "none",
+                    color: "#fff",
                     fontSize: 13,
-                    color: "var(--color-del)",
+                    fontWeight: 600,
+                    cursor: loading || !diff ? "not-allowed" : "pointer",
+                    transition: "all 0.2s",
                   }}
                 >
-                  ⚠️ {error}
-                </div>
-              )}
+                  {loading ? "Analiz ediliyor..." : "✦ Analiz Et"}
+                </button>
+              </div>
+            </div>
 
-              {/* Commit önerileri */}
-              {suggestions.length > 0 && (
+            {/* 3 kolon */}
+            <div
+              style={{
+                display: "grid",
+                gridTemplateColumns: "1fr 1fr 1fr",
+                gap: 20,
+              }}
+            >
+              <div
+                style={{
+                  background:
+                    "linear-gradient(135deg, rgba(234,179,8,0.08), rgba(249,115,22,0.08))",
+                  border: "1px solid rgba(234,179,8,0.2)",
+                  borderRadius: 12,
+                  padding: 18,
+                  display: "flex",
+                  alignItems: "flex-start",
+                  gap: 12,
+                }}
+              >
+                <span style={{ fontSize: 24, flexShrink: 0, marginTop: 12 }}>⚡</span>
                 <div>
                   <p
                     style={{
                       fontSize: 13,
                       fontWeight: 600,
-                      color: "var(--color-text)",
-                      marginBottom: 4,
+                      color: "#f59e0b",
+                      marginBottom: 16,
+                      marginTop: 12,
                     }}
                   >
-                    AI Commit Suggestions
+                    Backend uyku modunda olabilir!
                   </p>
                   <p
                     style={{
                       fontSize: 12,
                       color: "var(--color-muted)",
-                      marginBottom: 16,
+                      lineHeight: 1.6,
                     }}
                   >
-                    Based on your changes, here are the best conventional commit
-                    messages.
+                    Backend için ücretsiz tier kullanıldığı için backend 15 dakika
+                    işlem yapılmadığında uyku moduna girer. İlk istek{" "}
+                    <strong style={{ color: "var(--color-text)" }}>
+                      ~30 saniye
+                    </strong>{" "}
+                    sürebilir. Lütfen bekleyin, yeniden başlatılıyor.
                   </p>
-                  <div
-                    style={{
-                      display: "flex",
-                      flexDirection: "column",
-                      gap: 10,
-                    }}
-                  >
-                    {suggestions.map((suggestion, index) => (
+                </div>
+              </div>
+
+              {/* Quick Examples */}
+              <div
+                style={{
+                  background: "var(--color-surface)",
+                  border: "1px solid var(--color-border)",
+                  borderRadius: 12,
+                  padding: 18,
+                  gridColumn: "span 2",
+                }}
+              >
+                <p
+                  style={{
+                    fontSize: 13,
+                    fontWeight: 600,
+                    color: "var(--color-text)",
+                    marginBottom: 14,
+                  }}
+                >
+                  ⚡ Quick Examples
+                </p>
+                <div
+                  style={{ display: "flex", flexDirection: "column", gap: 8 }}
+                >
+                  {[
+                    {
+                      cmd: "git diff > changes.txt",
+                      desc: "Get all unstaged changes",
+                    },
+                    {
+                      cmd: "git diff --cached > changes.txt",
+                      desc: "Get staged changes",
+                    },
+                    {
+                      cmd: "git show HEAD > changes.txt",
+                      desc: "Get last commit changes",
+                    },
+                  ].map((ex, i) => (
+                    <div
+                      key={i}
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "space-between",
+                        padding: "10px 0",
+                        borderBottom: "1px solid var(--color-border)",
+                      }}
+                    >
                       <div
-                        key={index}
                         style={{
-                          background: "var(--color-surface)",
-                          border: "1px solid var(--color-border)",
-                          borderRadius: 10,
-                          padding: "14px 16px",
                           display: "flex",
-                          justifyContent: "space-between",
                           alignItems: "center",
+                          gap: 10,
                         }}
                       >
                         <div
                           style={{
+                            width: 28,
+                            height: 28,
+                            borderRadius: 7,
+                            background: "var(--color-bg)",
                             display: "flex",
-                            alignItems: "flex-start",
-                            gap: 12,
+                            alignItems: "center",
+                            justifyContent: "center",
+                            fontSize: 13,
+                            flexShrink: 0,
                           }}
                         >
-                          <span
+                          ⌨️
+                        </div>
+                        <div>
+                          <code
                             style={{
-                              fontSize: 11,
-                              fontWeight: 600,
-                              background:
-                                index === 0
-                                  ? "var(--color-accent-bg)"
-                                  : "var(--color-border)",
-                              color:
-                                index === 0
-                                  ? "var(--color-accent)"
-                                  : "var(--color-muted)",
-                              padding: "3px 8px",
-                              borderRadius: 4,
-                              whiteSpace: "nowrap",
-                              textTransform: "uppercase",
-                              letterSpacing: "0.05em",
-                              flexShrink: 0,
-                              marginTop: 2,
+                              fontSize: 12,
+                              color: "var(--color-text)",
+                              fontFamily: "monospace",
+                              display: "block",
                             }}
                           >
-                            {index === 0 ? "Recommended" : "Alternative"}
-                          </span>
-                          <div>
-                            <code
-                              style={{
-                                fontSize: 13,
-                                color: "var(--color-text)",
-                                fontFamily: "monospace",
-                                display: "block",
-                              }}
-                            >
-                              {suggestion.message}
-                            </code>
-                            <p
-                              style={{
-                                fontSize: 12,
-                                color: "var(--color-muted)",
-                                marginTop: 4,
-                              }}
-                            >
-                              {suggestion.description}
-                            </p>
-                          </div>
+                            {ex.cmd}
+                          </code>
+                          <p
+                            style={{
+                              fontSize: 11,
+                              color: "var(--color-muted)",
+                            }}
+                          >
+                            {ex.desc}
+                          </p>
                         </div>
-                        <button
-                          onClick={() => handleCopy(suggestion.message, index)}
-                          style={{
-                            marginLeft: 16,
-                            background:
-                              copiedIndex === index
-                                ? "var(--color-accent)"
-                                : "none",
-                            border: "1px solid var(--color-border)",
-                            borderRadius: 6,
-                            padding: "5px 12px",
-                            fontSize: 12,
-                            color:
-                              copiedIndex === index
-                                ? "#fff"
-                                : "var(--color-muted)",
-                            cursor: "pointer",
-                            flexShrink: 0,
-                            transition: "all 0.2s",
-                          }}
-                        >
-                          {copiedIndex === index ? "✓ Copied!" : "Copy"}
-                        </button>
                       </div>
-                    ))}
-                  </div>
+                      <button
+                        onClick={() => {
+                          navigator.clipboard.writeText(ex.cmd);
+                          setCopiedCmd(i);
+                          setTimeout(() => setCopiedCmd(null), 2000);
+                        }}
+                        style={{
+                          padding: "4px 10px",
+                          borderRadius: 6,
+                          border: "1px solid var(--color-border)",
+                          background:
+                            copiedCmd === i ? "var(--color-add-bg)" : "none",
+                          fontSize: 11,
+                          color:
+                            copiedCmd === i
+                              ? "var(--color-add)"
+                              : "var(--color-muted)",
+                          cursor: "pointer",
+                          transition: "all 0.2s",
+                        }}
+                      >
+                        {copiedCmd === i ? "✓ Copied" : "Copy"}
+                      </button>
+                    </div>
+                  ))}
                 </div>
-              )}
-            </>
-          )}
-        </div>
-
-        {/* Sağ panel — sadece dolu durumda */}
-        {/* Sağ panel — her zaman görünür */}
-        <div
-          style={{
-            width: 240,
-            flexShrink: 0,
-            display: "flex",
-            flexDirection: "column",
-            gap: 24,
-            paddingTop: 8,
-          }}
-        >
-          {stats ? (
-            <>
+              </div>
+            </div>
+          </div>
+        ) : (
+          /* DOLU DURUM */
+          <div style={{ maxWidth: 900, margin: "0 auto" }}>
+            {/* Başlık */}
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+                marginBottom: 24,
+              }}
+            >
               <div>
-                <p
+                <h1
                   style={{
-                    fontSize: 11,
+                    fontSize: 24,
                     fontWeight: 600,
-                    color: "var(--color-muted)",
-                    textTransform: "uppercase",
-                    letterSpacing: "0.06em",
-                    marginBottom: 10,
+                    color: "var(--color-text)",
+                    marginBottom: 4,
                   }}
                 >
-                  Changes
+                  Analysis Complete ✓
+                </h1>
+                <p style={{ fontSize: 13, color: "var(--color-muted)" }}>
+                  🕐 Analyzed just now
                 </p>
+              </div>
+              <div style={{ display: "flex", gap: 10 }}>
+                <button
+                  onClick={() => {
+                    setDiff("");
+                    setSuggestions([]);
+                    setStats(null);
+                  }}
+                  style={{
+                    padding: "7px 14px",
+                    borderRadius: 8,
+                    border: "1px solid var(--color-border)",
+                    background: "none",
+                    color: "var(--color-muted)",
+                    fontSize: 13,
+                    cursor: "pointer",
+                  }}
+                >
+                  Reset
+                </button>
+                {suggestions.length > 0 && (
+                  <button
+                    onClick={() =>
+                      navigator.clipboard.writeText(
+                        suggestions.map((s) => s.message).join("\n"),
+                      )
+                    }
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 6,
+                      padding: "7px 14px",
+                      borderRadius: 8,
+                      border: "1px solid var(--color-border)",
+                      background: "var(--color-surface)",
+                      color: "var(--color-text)",
+                      fontSize: 13,
+                      cursor: "pointer",
+                    }}
+                  >
+                    📤 Share
+                  </button>
+                )}
+              </div>
+            </div>
+
+            {/* Stats */}
+            {stats && (
+              <div
+                style={{
+                  display: "flex",
+                  gap: 10,
+                  marginBottom: 28,
+                  flexWrap: "wrap",
+                }}
+              >
                 <span
                   style={{
+                    padding: "5px 12px",
+                    borderRadius: 7,
+                    background: "var(--color-surface)",
+                    border: "1px solid var(--color-border)",
+                    fontSize: 13,
+                    color: "var(--color-text)",
+                  }}
+                >
+                  {stats.files} file{stats.files !== 1 ? "s" : ""} changed
+                </span>
+                <span
+                  style={{
+                    padding: "5px 12px",
+                    borderRadius: 7,
+                    background: "var(--color-add-bg)",
+                    border: "1px solid rgba(74,222,128,0.2)",
+                    fontSize: 13,
                     color: "var(--color-add)",
-                    fontWeight: 600,
-                    fontSize: 14,
-                    display: "block",
+                    fontWeight: 500,
                   }}
                 >
                   +{stats.additions} additions
                 </span>
                 <span
                   style={{
+                    padding: "5px 12px",
+                    borderRadius: 7,
+                    background: "var(--color-del-bg)",
+                    border: "1px solid rgba(251,113,133,0.2)",
+                    fontSize: 13,
                     color: "var(--color-del)",
-                    fontWeight: 600,
-                    fontSize: 14,
-                    display: "block",
+                    fontWeight: 500,
                   }}
                 >
                   -{stats.deletions} deletions
                 </span>
-              </div>
-              <div>
-                <p
+                <span
                   style={{
-                    fontSize: 11,
-                    fontWeight: 600,
+                    padding: "5px 12px",
+                    borderRadius: 7,
+                    background: "var(--color-surface)",
+                    border: "1px solid var(--color-border)",
+                    fontSize: 13,
                     color: "var(--color-muted)",
-                    textTransform: "uppercase",
-                    letterSpacing: "0.06em",
-                    marginBottom: 10,
+                    marginLeft: "auto",
                   }}
                 >
-                  Files Changed
+                  No breaking changes
+                </span>
+              </div>
+            )}
+
+            {error && (
+              <div
+                style={{
+                  background: "var(--color-del-bg)",
+                  border: "1px solid rgba(251,113,133,0.2)",
+                  borderRadius: 10,
+                  padding: "12px 16px",
+                  marginBottom: 20,
+                  fontSize: 13,
+                  color: "var(--color-del)",
+                }}
+              >
+                ⚠️ {error}
+              </div>
+            )}
+
+            {/* AI Commit Suggestions */}
+            {suggestions.length > 0 && (
+              <div style={{ marginBottom: 28 }}>
+                <p
+                  style={{
+                    fontSize: 15,
+                    fontWeight: 600,
+                    color: "var(--color-text)",
+                    marginBottom: 4,
+                  }}
+                >
+                  ✦ AI Commit Suggestions
+                </p>
+                <p
+                  style={{
+                    fontSize: 13,
+                    color: "var(--color-muted)",
+                    marginBottom: 16,
+                  }}
+                >
+                  Based on your changes, here are the best conventional commit
+                  messages.
                 </p>
                 <div
-                  style={{ display: "flex", flexDirection: "column", gap: 6 }}
+                  style={{ display: "flex", flexDirection: "column", gap: 10 }}
                 >
-                  {stats.fileNames.map((file, i) => (
-                    <span
+                  {suggestions.map((s, i) => (
+                    <div
                       key={i}
                       style={{
-                        fontSize: 12,
-                        color: "var(--color-text)",
-                        fontFamily: "monospace",
                         background: "var(--color-surface)",
-                        border: "1px solid var(--color-border)",
-                        borderRadius: 6,
-                        padding: "4px 8px",
-                        overflow: "hidden",
-                        textOverflow: "ellipsis",
-                        whiteSpace: "nowrap",
+                        border:
+                          i === 0
+                            ? "1px solid rgba(124,58,237,0.3)"
+                            : "1px solid var(--color-border)",
+                        borderRadius: 12,
+                        padding: "16px 18px",
+                        display: "flex",
+                        justifyContent: "space-between",
+                        alignItems: "center",
                       }}
                     >
-                      {file}
-                    </span>
+                      <div
+                        style={{
+                          display: "flex",
+                          alignItems: "flex-start",
+                          gap: 12,
+                        }}
+                      >
+                        <span
+                          style={{
+                            fontSize: 11,
+                            fontWeight: 700,
+                            background:
+                              i === 0
+                                ? "var(--color-accent-bg)"
+                                : "var(--color-border)",
+                            color:
+                              i === 0
+                                ? "var(--color-accent)"
+                                : "var(--color-muted)",
+                            padding: "3px 8px",
+                            borderRadius: 5,
+                            textTransform: "uppercase",
+                            letterSpacing: "0.05em",
+                            flexShrink: 0,
+                            marginTop: 2,
+                          }}
+                        >
+                          {i === 0 ? "Recommended" : "Alternative"}
+                        </span>
+                        <div>
+                          <code
+                            style={{
+                              fontSize: 13,
+                              color: "var(--color-text)",
+                              fontFamily: "monospace",
+                              display: "block",
+                              marginBottom: 3,
+                            }}
+                          >
+                            {s.message}
+                          </code>
+                          <p
+                            style={{
+                              fontSize: 12,
+                              color: "var(--color-muted)",
+                            }}
+                          >
+                            {s.description}
+                          </p>
+                        </div>
+                      </div>
+                      <button
+                        onClick={() => handleCopy(s.message, i)}
+                        style={{
+                          marginLeft: 16,
+                          background:
+                            copiedIndex === i ? "var(--color-add-bg)" : "none",
+                          border: "1px solid var(--color-border)",
+                          borderRadius: 7,
+                          padding: "6px 14px",
+                          fontSize: 12,
+                          color:
+                            copiedIndex === i
+                              ? "var(--color-add)"
+                              : "var(--color-muted)",
+                          cursor: "pointer",
+                          flexShrink: 0,
+                          transition: "all 0.2s",
+                          display: "flex",
+                          alignItems: "center",
+                          gap: 4,
+                        }}
+                      >
+                        {copiedIndex === i ? "✓ Copied" : "📋 Copy"}
+                      </button>
+                    </div>
                   ))}
                 </div>
               </div>
-            </>
-          ) : null}
+            )}
 
-          {/* Divider */}
-          <div style={{ borderTop: "1px solid var(--color-border)" }} />
-
-          {/* How to use */}
-          <div>
-            <p
-              style={{
-                fontSize: 11,
-                fontWeight: 600,
-                color: "var(--color-muted)",
-                textTransform: "uppercase",
-                letterSpacing: "0.06em",
-                marginBottom: 12,
-              }}
-            >
-              How to use
-            </p>
-            <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+            {/* Git Diff */}
+            {diff && (
               <div>
-                <p
-                  style={{
-                    fontSize: 12,
-                    fontWeight: 500,
-                    color: "var(--color-text)",
-                    marginBottom: 4,
-                  }}
-                >
-                  1. Get your diff
-                </p>
-                <code
-                  style={{
-                    fontSize: 11,
-                    display: "block",
-                    background: "var(--color-surface)",
-                    border: "1px solid var(--color-border)",
-                    borderRadius: 6,
-                    padding: "6px 10px",
-                    color: "var(--color-add)",
-                    fontFamily: "monospace",
-                  }}
-                >
-                  git diff {">"} changes.txt
-                </code>
-              </div>
-              <div>
-                <p
-                  style={{
-                    fontSize: 12,
-                    fontWeight: 500,
-                    color: "var(--color-text)",
-                    marginBottom: 4,
-                  }}
-                >
-                  2. Staged changes
-                </p>
-                <code
-                  style={{
-                    fontSize: 11,
-                    display: "block",
-                    background: "var(--color-surface)",
-                    border: "1px solid var(--color-border)",
-                    borderRadius: 6,
-                    padding: "6px 10px",
-                    color: "var(--color-add)",
-                    fontFamily: "monospace",
-                  }}
-                >
-                  git diff --cached {">"} changes.txt
-                </code>
-              </div>
-              <div>
-                <p
-                  style={{
-                    fontSize: 12,
-                    fontWeight: 500,
-                    color: "var(--color-text)",
-                    marginBottom: 4,
-                  }}
-                >
-                  3. Last commit
-                </p>
-                <code
-                  style={{
-                    fontSize: 11,
-                    display: "block",
-                    background: "var(--color-surface)",
-                    border: "1px solid var(--color-border)",
-                    borderRadius: 6,
-                    padding: "6px 10px",
-                    color: "var(--color-add)",
-                    fontFamily: "monospace",
-                  }}
-                >
-                  git diff HEAD {">"} changes.txt
-                </code>
-              </div>
-              <p
-                style={{
-                  fontSize: 12,
-                  color: "var(--color-muted)",
-                  lineHeight: 1.6,
-                }}
-              >
-                Then upload the file or paste the content directly.
-              </p>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Alt sabit input — ortalanmış */}
-      <div
-        style={{
-          position: "fixed",
-          bottom: 0,
-          left: 220,
-          right: 0,
-          padding: "16px 48px 24px",
-          background: "var(--color-bg)",
-          borderTop: "1px solid var(--color-border)",
-          display: "flex",
-          justifyContent: "center",
-          zIndex: 10,
-        }}
-      >
-        <div style={{ width: "100%", maxWidth: 640 }}>
-          {/* Proje dropdown */}
-          {showMenu && (
-            <div
-              style={{
-                background: "var(--color-surface)",
-                border: "1px solid var(--color-border)",
-                borderRadius: 12,
-                padding: 6,
-                marginBottom: 8,
-                boxShadow: "0 -4px 16px rgba(0,0,0,0.1)",
-                width: "30%",
-              }}
-            >
-              <p
-                style={{
-                  fontSize: 11,
-                  color: "var(--color-muted)",
-                  padding: "4px 10px",
-                  textTransform: "uppercase",
-                  letterSpacing: "0.06em",
-                }}
-              >
-                Project
-              </p>
-              <button
-                onClick={() => {
-                  setSelectedProjectId(null);
-                  localStorage.removeItem("selectedProjectId");
-                  setShowMenu(false);
-                }}
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 8,
-                  width: "100%",
-                  padding: "7px 10px",
-                  borderRadius: 6,
-                  background:
-                    selectedProjectId === null
-                      ? "var(--color-accent-bg)"
-                      : "none",
-                  border: "none",
-                  cursor: "pointer",
-                  fontSize: 13,
-                  color:
-                    selectedProjectId === null
-                      ? "var(--color-accent)"
-                      : "var(--color-text)",
-                  fontFamily: "inherit",
-                }}
-              >
-                No project
-              </button>
-              {projects.map((p) => (
-                <button
-                  key={p.id}
-                  onClick={() => {
-                    setSelectedProjectId(p.id);
-                    localStorage.setItem("selectedProjectId", p.id);
-                    setShowMenu(false);
-                  }}
+                <div
                   style={{
                     display: "flex",
+                    justifyContent: "space-between",
                     alignItems: "center",
-                    gap: 8,
-                    width: "100%",
-                    padding: "7px 10px",
-                    borderRadius: 6,
-                    background:
-                      selectedProjectId === p.id
-                        ? "var(--color-accent-bg)"
-                        : "none",
-                    border: "none",
-                    cursor: "pointer",
-                    fontSize: 13,
-                    color:
-                      selectedProjectId === p.id
-                        ? "var(--color-accent)"
-                        : "var(--color-text)",
-                    fontFamily: "inherit",
+                    marginBottom: 12,
                   }}
                 >
-                  <span
+                  <p
                     style={{
-                      width: 8,
-                      height: 8,
-                      borderRadius: "50%",
-                      background: p.color,
-                      flexShrink: 0,
+                      fontSize: 15,
+                      fontWeight: 600,
+                      color: "var(--color-text)",
                     }}
-                  />
-                  {p.name}
-                </button>
-              ))}
-
-              <div
-                style={{
-                  borderTop: "1px solid var(--color-border)",
-                  marginTop: 4,
-                  paddingTop: 4,
-                }}
-              >
-                <label
-                  htmlFor="file-upload"
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: 8,
-                    padding: "7px 10px",
-                    borderRadius: 6,
-                    fontSize: 13,
-                    color: "var(--color-text)",
-                    cursor: "pointer",
-                  }}
-                >
-                  📎 Add .txt file
-                </label>
-                <input
-                  id="file-upload"
-                  type="file"
-                  accept=".txt"
-                  style={{ display: "none" }}
-                  onChange={(e) => {
-                    const file = e.target.files?.[0];
-                    if (!file) return;
-                    const reader = new FileReader();
-                    reader.onload = (event) =>
-                      setDiff(event.target?.result as string);
-                    reader.readAsText(file);
-                    setShowMenu(false);
-                  }}
-                />
-              </div>
-            </div>
-          )}
-
-          {/* Input bar */}
-          <div
-            style={{
-              background: "var(--color-surface)",
-              border: "1px solid var(--color-border)",
-              borderRadius: 16,
-              overflow: "hidden",
-            }}
-          >
-            {/* Textarea */}
-            <div style={{ padding: "12px 16px" }}>
-              <textarea
-                value={diff}
-                onChange={(e) => setDiff(e.target.value)}
-                placeholder="Write a message..."
-                rows={1}
-                style={{
-                  width: "100%",
-                  background: "none",
-                  border: "none",
-                  outline: "none",
-                  fontSize: 14,
-                  fontFamily: "inherit",
-                  color: "var(--color-text)",
-                  resize: "none",
-                  lineHeight: 1.5,
-                  maxHeight: 120,
-                  overflow: "auto",
-                }}
-              />
-            </div>
-
-            {/* Alt bar — butonlar */}
-            <div
-              style={{
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "space-between",
-                padding: "8px 12px",
-                borderTop: "1px solid var(--color-border)",
-              }}
-            >
-              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                {/* + butonu */}
-                <button
-                  onClick={() => setShowMenu(!showMenu)}
-                  style={{
-                    width: 28,
-                    height: 28,
-                    borderRadius: 8,
-                    border: "1px solid var(--color-border)",
-                    background: "var(--color-bg)",
-                    color: "var(--color-text)",
-                    cursor: "pointer",
-                    fontSize: 16,
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                  }}
-                >
-                  +
-                </button>
-
-                {/* Seçili proje göster */}
-                {selectedProjectId && (
-                  <span
+                  >
+                    Git Diff
+                  </p>
+                  <button
+                    onClick={() => {
+                      setDiff("");
+                      setSuggestions([]);
+                      setStats(null);
+                    }}
                     style={{
+                      background: "none",
+                      border: "none",
                       fontSize: 12,
-                      color: "var(--color-accent)",
-                      background: "var(--color-accent-bg)",
-                      padding: "3px 8px",
-                      borderRadius: 6,
+                      color: "var(--color-muted)",
+                      cursor: "pointer",
                     }}
                   >
-                    {projects.find((p) => p.id === selectedProjectId)?.name}
-                  </span>
-                )}
+                    ✕ Clear
+                  </button>
+                </div>
+                <DiffViewer diff={diff} />
               </div>
-
-              {/* Gönder butonu */}
-              <button
-                onClick={handleSubmit}
-                disabled={loading || !diff}
-                style={{
-                  width: 32,
-                  height: 32,
-                  borderRadius: 10,
-                  background:
-                    loading || !diff
-                      ? "var(--color-muted)"
-                      : "var(--color-accent)",
-                  border: "none",
-                  cursor: loading || !diff ? "not-allowed" : "pointer",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  transition: "background 0.15s",
-                }}
-              >
-                {loading ? (
-                  <span
-                    style={{
-                      width: 12,
-                      height: 12,
-                      border: "2px solid rgba(255,255,255,0.3)",
-                      borderTop: "2px solid #fff",
-                      borderRadius: "50%",
-                      display: "inline-block",
-                      animation: "spin 0.8s linear infinite",
-                    }}
-                  />
-                ) : (
-                  <svg
-                    width="14"
-                    height="14"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="#fff"
-                    strokeWidth="2.5"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  >
-                    <line x1="22" y1="2" x2="11" y2="13" />
-                    <polygon points="22 2 15 22 11 13 2 9 22 2" />
-                  </svg>
-                )}
-              </button>
-            </div>
+            )}
           </div>
-        </div>
+        )}
       </div>
     </div>
   );

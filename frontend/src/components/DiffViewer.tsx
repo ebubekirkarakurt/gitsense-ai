@@ -12,7 +12,7 @@ export function DiffViewer({ diff }: { diff: string }) {
         border: "1px solid var(--color-border)",
         borderRadius: 10,
         overflow: "hidden",
-        marginBottom: 12,
+        marginBottom: 0,
         background: "var(--color-surface)",
       }}
     >
@@ -29,15 +29,7 @@ export function DiffViewer({ diff }: { diff: string }) {
         {fileName}
       </div>
 
-      <div
-        style={{
-          fontFamily: "monospace",
-          fontSize: 13,
-          overflowX: "auto",
-          overflowY: "auto",
-          maxHeight: 320,
-        }}
-      >
+      <div style={{ fontFamily: "monospace", fontSize: 12, overflowX: "auto" }}>
         {lines.map((line, i) => {
           const isAdd = line.startsWith("+") && !line.startsWith("+++");
           const isDel = line.startsWith("-") && !line.startsWith("---");

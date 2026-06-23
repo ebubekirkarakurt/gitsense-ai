@@ -42,7 +42,7 @@ export default function ProjectPage() {
         <button
           onClick={() => window.history.back()}
           style={{
-            background: "none",
+            background: "white",
             border: "1px solid var(--color-border)",
             borderRadius: 8,
             padding: "6px 12px",
@@ -51,7 +51,7 @@ export default function ProjectPage() {
             color: "var(--color-muted)",
           }}
         >
-          ← Back
+          {"<"}
         </button>
         <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
           <span style={{
