@@ -71,7 +71,7 @@ export default function Home() {
       if (user) {
         await supabase.from("analyses").insert({
           user_id: user.id,
-          title: `Analysis ${new Date().toLocaleDateString()}`,
+          title: data.title || `Analysis ${new Date().toLocaleDateString()}`,
           diff_text: diff,
           suggestions: data.suggestions,
           stats: data.stats,
@@ -137,7 +137,9 @@ export default function Home() {
                   marginBottom: 8,
                 }}
               >
-                Merhaba {user?.user_metadata?.full_name || user?.email?.split("@")[0]} 👋
+                Merhaba{" "}
+                {user?.user_metadata?.full_name || user?.email?.split("@")[0]}{" "}
+                👋
               </h1>
               <p style={{ fontSize: 15, color: "var(--color-muted)" }}>
                 Bugün neyi commitliyoruz?
