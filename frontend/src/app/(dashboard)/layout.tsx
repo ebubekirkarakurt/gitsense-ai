@@ -8,9 +8,7 @@ export default function DashboardLayout({
   return (
     <div style={{ display: "flex", minHeight: "100vh" }}>
       <Sidebar />
-      <div style={{ flex: 1, minWidth: 0 }}>
-        {children}
-      </div>
+      <div style={{ flex: 1, minWidth: 0 }}>{children}</div>
     </div>
   );
 }

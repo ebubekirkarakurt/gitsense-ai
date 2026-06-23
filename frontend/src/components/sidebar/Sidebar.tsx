@@ -8,6 +8,7 @@ import { getProjects, createProject } from "@/lib/projects";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/hooks/useAuth";
 import { Analysis } from "@/types";
+import { SettingsModal } from "../SettingsModal";
 
 function IconChevron({ dir }: { dir: "left" | "right" }) {
   return (
@@ -91,6 +92,7 @@ export function Sidebar() {
   const [showNewProject, setShowNewProject] = useState(false);
   const [newProjectName, setNewProjectName] = useState("");
   const [showUserMenu, setShowUserMenu] = useState(false);
+  const [showSettings, setShowSettings] = useState(false);
 
   const { user } = useAuth();
   const [recentAnalyses, setRecentAnalyses] = useState<Analysis[]>([]);
@@ -493,7 +495,10 @@ export function Sidebar() {
             </div>
 
             <button
-              onClick={() => {}}
+              onClick={() => {
+                setShowSettings(true);
+                setShowUserMenu(false);
+              }}
               style={{
                 display: "flex",
                 alignItems: "center",
@@ -513,7 +518,10 @@ export function Sidebar() {
             </button>
 
             <button
-              onClick={() => {}}
+              onClick={() => {
+                setShowSettings(true);
+                setShowUserMenu(false);
+              }}
               style={{
                 display: "flex",
                 alignItems: "center",
@@ -533,7 +541,10 @@ export function Sidebar() {
             </button>
 
             <button
-              onClick={() => {}}
+              onClick={() => {
+                setShowSettings(true);
+                setShowUserMenu(false);
+              }}
               style={{
                 display: "flex",
                 alignItems: "center",
@@ -580,6 +591,9 @@ export function Sidebar() {
               </button>
             </div>
           </div>
+        )}
+        {showSettings && (
+          <SettingsModal onClose={() => setShowSettings(false)} user={user} />
         )}
       </div>
     </aside>

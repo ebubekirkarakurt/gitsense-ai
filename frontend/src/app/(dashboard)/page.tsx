@@ -535,6 +535,7 @@ export default function Home() {
           borderTop: "1px solid var(--color-border)",
           display: "flex",
           justifyContent: "center",
+          zIndex: -1,
         }}
       >
         <div style={{ width: "100%", maxWidth: 640, position: "relative" }}>
