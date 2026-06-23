@@ -329,9 +329,7 @@ export default function AnalysisPage() {
               display: "flex",
               flexDirection: "column",
               gap: 12,
-              marginBottom: 12,
-              maxHeight: 300,
-              overflowY: "auto",
+              marginBottom: 100,
             }}
           >
             {chatHistory.map((msg, i) => (

@@ -93,6 +93,11 @@ export function Sidebar() {
   const [newProjectName, setNewProjectName] = useState("");
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
+  const [deleteConfirm, setDeleteConfirm] = useState<{
+    type: "analysis" | "project";
+    id: string;
+    title: string;
+  } | null>(null);
 
   const { user } = useAuth();
   const [recentAnalyses, setRecentAnalyses] = useState<Analysis[]>([]);
@@ -149,6 +154,18 @@ export function Sidebar() {
   const handleLogout = async () => {
     await supabase.auth.signOut();
     window.location.href = "/login";
+  };
+
+  const handleDeleteAnalysis = async (id: string) => {
+    await supabase.from("analyses").delete().eq("id", id);
+    setRecentAnalyses((prev) => prev.filter((a) => a.id !== id));
+    setDeleteConfirm(null);
+  };
+
+  const handleDeleteProject = async (id: string) => {
+    await supabase.from("projects").delete().eq("id", id);
+    setProjects((prev) => prev.filter((p) => p.id !== id));
+    setDeleteConfirm(null);
   };
 
   return (
@@ -259,36 +276,94 @@ export function Sidebar() {
             </p>
 
             {projects.map((p) => (
-              <Link
+              <div
                 key={p.id}
-                href={`/project/${p.id}`}
                 style={{
                   display: "flex",
                   alignItems: "center",
-                  gap: 8,
-                  padding: "6px 10px",
                   borderRadius: 7,
-                  fontSize: 13.5,
-                  color: "var(--color-muted)",
-                  textDecoration: "none",
                   marginBottom: 1,
-                  overflow: "hidden",
-                  whiteSpace: "nowrap",
                 }}
               >
-                <span
+                <Link
+                  href={`/project/${p.id}`}
                   style={{
-                    width: 8,
-                    height: 8,
-                    borderRadius: "50%",
-                    background: p.color,
-                    flexShrink: 0,
+                    flex: 1,
+                    minWidth: 0,
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 8,
+                    padding: "6px 10px",
+                    fontSize: 13.5,
+                    color: "var(--color-muted)",
+                    textDecoration: "none",
+                    overflow: "hidden",
+                    whiteSpace: "nowrap",
                   }}
-                />
-                <span style={{ overflow: "hidden", textOverflow: "ellipsis" }}>
-                  {p.name}
-                </span>
-              </Link>
+                >
+                  <span
+                    style={{
+                      width: 8,
+                      height: 8,
+                      borderRadius: "50%",
+                      background: p.color,
+                      flexShrink: 0,
+                    }}
+                  />
+                  <span
+                    style={{ overflow: "hidden", textOverflow: "ellipsis" }}
+                  >
+                    {p.name}
+                  </span>
+                </Link>
+                <button
+                  onClick={() =>
+                    setDeleteConfirm({
+                      type: "project",
+                      id: p.id,
+                      title: p.name,
+                    })
+                  }
+                  style={{
+                    background: "none",
+                    border: "none",
+                    cursor: "pointer",
+                    padding: "6px",
+                    borderRadius: "6px",
+                    color: "var(--color-del)",
+                    opacity: 0.4,
+                    flexShrink: 0,
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    transition: "all 0.15s ease",
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.opacity = "1";
+                    e.currentTarget.style.background = "var(--color-del-bg)";
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.opacity = "0.4";
+                    e.currentTarget.style.background = "none";
+                  }}
+                  title="Delete Project"
+                >
+                  <svg
+                    width="14"
+                    height="14"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    <path d="M3 6h18" />
+                    <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6" />
+                    <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2" />
+                  </svg>
+                </button>
+              </div>
             ))}
 
             {/* Recent Analyses */}
@@ -308,31 +383,88 @@ export function Sidebar() {
                   Recent
                 </p>
                 {recentAnalyses.map((a) => (
-                  <Link
+                  <div
                     key={a.id}
-                    href={`/analysis/${a.id}`}
                     style={{
-                      display: "block",
-                      padding: "6px 10px",
+                      display: "flex",
+                      alignItems: "center",
                       borderRadius: 7,
-                      fontSize: 13,
-                      color: "var(--color-muted)",
                       marginBottom: 1,
-                      textDecoration: "none",
+                      maxWidth: "100%",
                     }}
                   >
-                    <span
+                    <Link
+                      href={`/analysis/${a.id}`}
                       style={{
-                        display: "block",
-                        overflow: "hidden",
-                        textOverflow: "ellipsis",
-                        whiteSpace: "nowrap",
+                        flex: 1,
+                        minWidth: 0,
+                        padding: "6px 10px",
+                        fontSize: 13,
+                        color: "var(--color-muted)",
+                        textDecoration: "none",
                       }}
                     >
-                      {a.title}
-                    </span>
-                    <span style={{ fontSize: 11 }}>{a.timeAgo}</span>
-                  </Link>
+                      <span
+                        style={{
+                          display: "block",
+                          overflow: "hidden",
+                          textOverflow: "ellipsis",
+                          whiteSpace: "nowrap",
+                        }}
+                      >
+                        {a.title}
+                      </span>
+                      <span style={{ fontSize: 11 }}>{a.timeAgo}</span>
+                    </Link>
+                    <button
+                      onClick={() =>
+                        setDeleteConfirm({
+                          type: "analysis",
+                          id: a.id,
+                          title: a.title,
+                        })
+                      }
+                      style={{
+                        background: "none",
+                        border: "none",
+                        cursor: "pointer",
+                        padding: "6px",
+                        borderRadius: "6px",
+                        color: "var(--color-del)",
+                        opacity: 0.4,
+                        flexShrink: 0,
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        transition: "all 0.15s ease",
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.opacity = "1";
+                        e.currentTarget.style.background =
+                          "var(--color-del-bg)";
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.opacity = "0.4";
+                        e.currentTarget.style.background = "none";
+                      }}
+                      title="Delete Analysis"
+                    >
+                      <svg
+                        width="14"
+                        height="14"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      >
+                        <path d="M3 6h18" />
+                        <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6" />
+                        <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2" />
+                      </svg>
+                    </button>
+                  </div>
                 ))}
               </div>
             )}
@@ -592,6 +724,92 @@ export function Sidebar() {
               >
                 Log out
               </button>
+            </div>
+          </div>
+        )}
+        {deleteConfirm && (
+          <div
+            onClick={() => setDeleteConfirm(null)}
+            style={{
+              position: "fixed",
+              inset: 0,
+              background: "rgba(0,0,0,0.5)",
+              zIndex: 2000,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+            }}
+          >
+            <div
+              onClick={(e) => e.stopPropagation()}
+              style={{
+                background: "var(--color-surface)",
+                border: "1px solid var(--color-border)",
+                borderRadius: 14,
+                padding: 24,
+                width: 340,
+                boxShadow: "0 20px 40px rgba(0,0,0,0.3)",
+              }}
+            >
+              <p
+                style={{
+                  fontSize: 16,
+                  fontWeight: 600,
+                  color: "var(--color-text)",
+                  marginBottom: 8,
+                }}
+              >
+                Silmek istediğinize emin misiniz?
+              </p>
+              <p
+                style={{
+                  fontSize: 13,
+                  color: "var(--color-muted)",
+                  marginBottom: 24,
+                }}
+              >
+                <strong style={{ color: "var(--color-text)" }}>
+                  {deleteConfirm.title}
+                </strong>{" "}
+                kalıcı olarak silinecek.
+              </p>
+              <div
+                style={{ display: "flex", gap: 10, justifyContent: "flex-end" }}
+              >
+                <button
+                  onClick={() => setDeleteConfirm(null)}
+                  style={{
+                    padding: "8px 16px",
+                    borderRadius: 8,
+                    border: "1px solid var(--color-border)",
+                    background: "none",
+                    color: "var(--color-text)",
+                    fontSize: 13,
+                    cursor: "pointer",
+                  }}
+                >
+                  İptal
+                </button>
+                <button
+                  onClick={() =>
+                    deleteConfirm.type === "analysis"
+                      ? handleDeleteAnalysis(deleteConfirm.id)
+                      : handleDeleteProject(deleteConfirm.id)
+                  }
+                  style={{
+                    padding: "8px 16px",
+                    borderRadius: 8,
+                    border: "none",
+                    background: "var(--color-del)",
+                    color: "#fff",
+                    fontSize: 13,
+                    fontWeight: 600,
+                    cursor: "pointer",
+                  }}
+                >
+                  Sil
+                </button>
+              </div>
             </div>
           </div>
         )}
