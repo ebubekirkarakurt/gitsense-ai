@@ -32,17 +32,24 @@ export async function generateCommit(data: any) {
   const message = block.type === "text" ? block.text : "";
   const cleaned = message.replace(/```[a-z]*\n?/g, "").trim();
 
-  const suggestions = cleaned
-    .split("\n")
-    .filter((line) => line.trim() !== "")
+  const lines = cleaned
+  .split("\n")
+  .filter((line) => line.trim() !== "");
+
+const titleLine = lines.find((line) => line.startsWith("TITLE:"));
+const title = titleLine 
+  ? titleLine.replace("TITLE:", "").trim() 
+  : `Analysis ${new Date().toLocaleDateString()}`;
+
+  const suggestions = lines
+    .filter((line) => !line.startsWith("TITLE:"))
     .map((line) => {
       const clean = line.replace(/^\d+\.\s*/, "").trim();
       const [message, description] = clean.split("|").map((s) => s.trim());
       return { message, description: description || "" };
     });
 
-
   //console.log("Generated Commit Message:\n", message);
 
- return { suggestions };
+  return { suggestions, title };
 }

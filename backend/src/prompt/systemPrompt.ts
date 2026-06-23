@@ -15,6 +15,16 @@ Kurallar:
 1. feat(auth): add JWT token validation | Validates token on every protected route
 2. fix(auth): handle expired token error | Returns 401 when token is expired
 3. refactor(auth): extract token logic | Moves token handling to separate service
+
+Ayrıca çıktının en sonuna şu formatta bir başlık ekle:
+TITLE: <kısa başlık, max 5 kelime, İngilizce>
+
+Örnek:
+1. feat(auth): add JWT token validation
+2. fix(auth): correct token signing logic  
+3. refactor(auth): simplify token generation
+TITLE: Add JWT Authentication Flow
+
 `;
 
 export default systemPrompt;

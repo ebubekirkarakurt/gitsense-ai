@@ -33,6 +33,7 @@ router.post("/", async (req, res) => {
         ),
         fileNames: reduced.files.map((f: any) => f.path),
       },
+      title: aiResult.title
     });
   } catch (err) {
     console.error(err);
