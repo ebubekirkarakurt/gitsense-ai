@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import { DiffViewer } from "@/components/DiffViewer";
+import ReactMarkdown from "react-markdown";
 
 export default function AnalysisPage() {
   const { id } = useParams();
@@ -15,6 +16,7 @@ export default function AnalysisPage() {
     { role: "user" | "assistant"; content: string }[]
   >([]);
   const [chatLoading, setChatLoading] = useState(false);
+  const [copiedSuggestion, setCopiedSuggestion] = useState<number | null>(null);
 
   const handleChat = async () => {
     if (!chatMessage.trim()) return;
@@ -291,20 +293,29 @@ export default function AnalysisPage() {
                   </div>
                 </div>
                 <button
-                  onClick={() => navigator.clipboard.writeText(s.message)}
+                  onClick={() => {
+                    navigator.clipboard.writeText(s.message);
+                    setCopiedSuggestion(i);
+                    setTimeout(() => setCopiedSuggestion(null), 2000);
+                  }}
                   style={{
                     marginLeft: 16,
-                    background: "none",
+                    background:
+                      copiedSuggestion === i ? "var(--color-add-bg)" : "none",
                     border: "1px solid var(--color-border)",
                     borderRadius: 6,
                     padding: "5px 12px",
                     fontSize: 12,
-                    color: "var(--color-muted)",
+                    color:
+                      copiedSuggestion === i
+                        ? "var(--color-add)"
+                        : "var(--color-muted)",
                     cursor: "pointer",
                     flexShrink: 0,
+                    transition: "all 0.2s",
                   }}
                 >
-                  Copy
+                  {copiedSuggestion === i ? "✓ Copied" : "Copy"}
                 </button>
               </div>
             ))}
@@ -356,10 +367,68 @@ export default function AnalysisPage() {
                       msg.role === "assistant"
                         ? "1px solid var(--color-border)"
                         : "none",
-                    whiteSpace: "pre-wrap",
                   }}
                 >
-                  {msg.content}
+                  {msg.role === "assistant" ? (
+                    <ReactMarkdown
+                      components={{
+                        p: ({ children }) => (
+                          <p style={{ margin: "0 0 8px", lineHeight: 1.6 }}>
+                            {children}
+                          </p>
+                        ),
+                        code: ({ children }) => (
+                          <code
+                            style={{
+                              background: "var(--color-bg)",
+                              padding: "2px 6px",
+                              borderRadius: 4,
+                              fontSize: 12,
+                              fontFamily: "monospace",
+                            }}
+                          >
+                            {children}
+                          </code>
+                        ),
+                        pre: ({ children }) => (
+                          <pre
+                            style={{
+                              background: "var(--color-bg)",
+                              padding: 10,
+                              borderRadius: 6,
+                              overflow: "auto",
+                              fontSize: 12,
+                              marginBottom: 8,
+                            }}
+                          >
+                            {children}
+                          </pre>
+                        ),
+                        strong: ({ children }) => (
+                          <strong
+                            style={{
+                              color: "var(--color-text)",
+                              fontWeight: 600,
+                            }}
+                          >
+                            {children}
+                          </strong>
+                        ),
+                        ul: ({ children }) => (
+                          <ul style={{ paddingLeft: 16, marginBottom: 8 }}>
+                            {children}
+                          </ul>
+                        ),
+                        li: ({ children }) => (
+                          <li style={{ marginBottom: 4 }}>{children}</li>
+                        ),
+                      }}
+                    >
+                      {msg.content}
+                    </ReactMarkdown>
+                  ) : (
+                    msg.content
+                  )}
                 </div>
               </div>
             ))}
