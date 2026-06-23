@@ -109,9 +109,10 @@ export default function Home() {
     <div
       style={{
         flex: 1,
+        overflow: "auto",
         display: "flex",
-        flexDirection: "column",
-        height: "100vh",
+        gap: 32,
+        padding: "40px 48px 160px",
       }}
     >
       {/* Ana içerik */}
@@ -566,6 +567,7 @@ export default function Home() {
                 padding: 6,
                 marginBottom: 8,
                 boxShadow: "0 -4px 16px rgba(0,0,0,0.1)",
+                width: "30%",
               }}
             >
               <p
