@@ -137,7 +137,7 @@ export default function Home() {
                   marginBottom: 8,
                 }}
               >
-                Merhaba Bekir 👋
+                Merhaba {user?.user_metadata?.full_name || user?.email?.split("@")[0]} 👋
               </h1>
               <p style={{ fontSize: 15, color: "var(--color-muted)" }}>
                 Bugün neyi commitliyoruz?
