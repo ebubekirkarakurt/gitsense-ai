@@ -16,18 +16,50 @@ export function SettingsModal({
   const [fullName, setFullName] = useState(
     user?.user_metadata?.full_name || "",
   );
+  const [email, setEmail] = useState(user?.email || "");
+  const [password, setPassword] = useState("");
   const [saving, setSaving] = useState(false);
+
+  const [theme, setTheme] = useState<"light" | "dark" | "system">("light");
+
+  const applyTheme = (t: "light" | "dark" | "system") => {
+    setTheme(t);
+    if (t === "system") {
+      const isDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+      document.documentElement.setAttribute(
+        "data-theme",
+        isDark ? "dark" : "light",
+      );
+    } else {
+      document.documentElement.setAttribute("data-theme", t);
+    }
+  };
+
+  const [saved, setSaved] = useState(false);
 
   const handleSave = async () => {
     setSaving(true);
-    await supabase.auth.updateUser({
+
+    const updates: any = {
       data: { full_name: fullName },
-    });
+    };
+
+    if (password) {
+      updates.password = password;
+    }
+
+    if (email !== user?.email) {
+      updates.email = email;
+    }
+
+    await supabase.auth.updateUser(updates);
+
     setSaving(false);
+    setSaved(true);
+    setTimeout(() => setSaved(false), 3000);
   };
 
   return (
-    // Arka plan overlay
     <div
       onClick={onClose}
       style={{
@@ -40,6 +72,25 @@ export function SettingsModal({
         justifyContent: "center",
       }}
     >
+      {saved && (
+        <div
+          style={{
+            position: "fixed",
+            bottom: 24,
+            right: 24,
+            background: "#1a7a4a",
+            color: "#fff",
+            padding: "10px 18px",
+            borderRadius: 10,
+            fontSize: 13,
+            fontWeight: 500,
+            zIndex: 3000,
+            boxShadow: "0 4px 16px rgba(0,0,0,0.15)",
+          }}
+        >
+          ✓ Changes saved
+        </div>
+      )}
       {/* Modal kutusu */}
       <div
         onClick={(e) => e.stopPropagation()}
@@ -155,9 +206,65 @@ export function SettingsModal({
                 </label>
                 <input
                   type="text"
-                  defaultValue={user?.user_metadata?.full_name || ""}
                   value={fullName}
-                    onChange={(e) => setFullName(e.target.value)}
+                  onChange={(e) => setFullName(e.target.value)}
+                  style={{
+                    width: "100%",
+                    padding: "10px 14px",
+                    borderRadius: 8,
+                    border: "1px solid var(--color-border)",
+                    background: "var(--color-bg)",
+                    color: "var(--color-text)",
+                    fontSize: 14,
+                    outline: "none",
+                  }}
+                />
+              </div>
+              <div style={{ marginBottom: 24 }}>
+                <label
+                  style={{
+                    fontSize: 13,
+                    fontWeight: 500,
+                    color: "var(--color-text)",
+                    display: "block",
+                    marginBottom: 8,
+                  }}
+                >
+                  Email
+                </label>
+                <input
+                  type="text"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  style={{
+                    width: "100%",
+                    padding: "10px 14px",
+                    borderRadius: 8,
+                    border: "1px solid var(--color-border)",
+                    background: "var(--color-bg)",
+                    color: "var(--color-text)",
+                    fontSize: 14,
+                    outline: "none",
+                  }}
+                />
+              </div>
+              <div style={{ marginBottom: 24 }}>
+                <label
+                  style={{
+                    fontSize: 13,
+                    fontWeight: 500,
+                    color: "var(--color-text)",
+                    display: "block",
+                    marginBottom: 8,
+                  }}
+                >
+                  Password
+                </label>
+                <input
+                  type="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="Leave blank to keep current password"
                   style={{
                     width: "100%",
                     padding: "10px 14px",
@@ -199,33 +306,35 @@ export function SettingsModal({
               >
                 Choose your theme preference.
               </p>
-              <div style={{ display: "flex", gap: 12 }}>
-                <button
-                  style={{
-                    padding: "10px 20px",
-                    borderRadius: 8,
-                    border: "1px solid var(--color-border)",
-                    background: "var(--color-bg)",
-                    color: "var(--color-text)",
-                    cursor: "pointer",
-                    fontSize: 13,
-                  }}
-                >
-                  ☀️ Light
-                </button>
-                <button
-                  style={{
-                    padding: "10px 20px",
-                    borderRadius: 8,
-                    border: "1px solid var(--color-border)",
-                    background: "var(--color-bg)",
-                    color: "var(--color-text)",
-                    cursor: "pointer",
-                    fontSize: 13,
-                  }}
-                >
-                  🌙 Dark
-                </button>
+              <div style={{ display: "flex", gap: 8 }}>
+                {(["system", "light", "dark"] as const).map((t) => (
+                  <button
+                    key={t}
+                    onClick={() => applyTheme(t)}
+                    style={{
+                      padding: "10px 20px",
+                      borderRadius: 8,
+                      border:
+                        theme === t
+                          ? "2px solid var(--color-accent)"
+                          : "1px solid var(--color-border)",
+                      background:
+                        theme === t
+                          ? "var(--color-accent-bg)"
+                          : "var(--color-bg)",
+                      color:
+                        theme === t
+                          ? "var(--color-accent)"
+                          : "var(--color-text)",
+                      cursor: "pointer",
+                      fontSize: 13,
+                      fontWeight: theme === t ? 600 : 400,
+                      textTransform: "capitalize",
+                    }}
+                  >
+                    {t === "system" ? "🖥️" : t === "light" ? "☀️" : "🌙"} {t}
+                  </button>
+                ))}
               </div>
             </div>
           )}
