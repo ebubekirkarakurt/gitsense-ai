@@ -277,4 +277,4 @@ If you find a bug, have an improvement idea, or want to contribute a feature, fe
 
 ## License
 
-This project is licensed under the ISC License.
+This project is licensed under the MIT License.
